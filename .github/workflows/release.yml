@@ -84,12 +84,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # No macOS. Forged Alliance itself does not run there, so a client that
-        # cannot launch a game is not worth shipping, and the two jobs failed on
-        # every release anyway: `prepare:native` has no ICE adapter jar and no
-        # Java runtime for darwin, and Tauri will not bundle a resource that is
-        # not on disk. Two lines to put back if that ever changes.
+        # macOS is Apple silicon only. The game runs there under Wine, and the
+        # client installs Wine, the prefix, the Java runtime with the ICE
+        # adapter, and the game itself at first launch (`infra::mac_setup`),
+        # so nothing Java-shaped is bundled: `tauri.macos.conf.json` drops the
+        # adapter jar from the resources for that reason.
         include:
+          - platform: 'macos-latest'
+            args: '--target aarch64-apple-darwin'
           - platform: 'ubuntu-22.04'
             args: ''
           - platform: 'windows-latest'
