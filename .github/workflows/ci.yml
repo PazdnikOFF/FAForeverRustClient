@@ -23,7 +23,7 @@ jobs:
     name: Rust - test + clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # src-tauri (faforever-rust-client) links against the system webview stack,
       # so the workspace build needs these even though the logic crates are pure.
@@ -78,7 +78,7 @@ jobs:
     name: Dependencies - advisories + licences
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -114,13 +114,13 @@ jobs:
     name: Frontend - lint + typecheck + test + build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Install Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -176,7 +176,7 @@ jobs:
     # faf-ipc depends only on faf-domain + specta (no Tauri), so this job needs
     # no system libraries. It just regenerates the bindings and diffs them.
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -198,7 +198,7 @@ jobs:
     name: Reducer conformance fixture drift
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
