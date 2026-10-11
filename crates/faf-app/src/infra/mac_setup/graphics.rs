@@ -3,8 +3,7 @@
 //! What is changed is what measured: EP93's forged-alliance-mac lab, on an M4
 //! Max under the same Wine-and-Rosetta path, found turning shadows off the one
 //! setting worth having (+29% frame rate at a fixed view), with fidelity and
-//! the cursor mode within noise. Vertical sync, antialiasing and bloom go too, and
-//! the cursor is kept inside the game in fullscreen:
+//! the cursor mode within noise. Vertical sync, antialiasing and bloom go too:
 //! each is work the render thread does while the simulation, which is what
 //! actually limits a Mac, waits for it. Resolution is left alone; it is the
 //! player's choice and the display's.
@@ -20,24 +19,20 @@ use std::path::Path;
 /// once by itself (see `mac_setup::optimize_graphics_once`), so adding one
 /// later reaches existing installs without resetting what an earlier one set
 /// and the player has since changed back.
-const RELEASES: [&[(&str, &str)]; 3] = [
-    &[
-        ("shadow_quality", "0"),
-        ("vsync", "0"),
-        ("antialiasing", "0"),
-        ("bloom_render", "0"),
-    ],
-    // On a second display the cursor otherwise leaves the game in fullscreen,
-    // and the edge of the screen stops scrolling the map. FA confines it
-    // itself with this on, through `ClipCursor`, which the Wine Mac driver
-    // implements with the window's confinement rectangle.
-    &[("lock_fullscreen_cursor_to_window", "1")],
-    // Windowed rather than Direct3D's exclusive full screen, which minimises
-    // the game whenever another application takes the focus: on a second
-    // display that is every click outside the game. `fa-window.exe` then
-    // takes the frame away and fills the monitor, and keeps the cursor in.
-    &[("primary_adapter", "'windowed'")],
-];
+const RELEASES: [&[(&str, &str)]; 1] = [&[
+    ("shadow_quality", "0"),
+    ("vsync", "0"),
+    ("antialiasing", "0"),
+    ("bloom_render", "0"),
+]];
+
+// Not here, deliberately: windowed mode with the frame taken off. The game
+// sizes its back buffer when the window is created, so a window stretched to
+// a 5K display afterwards was drawn scaled, with broken fonts and artefacts
+// across the interface. Two installs got it as defaults 2 and 3 (with the
+// cursor lock beside it) and had them reverted by hand; the version their
+// marker records is higher than this list, so nothing is applied to them
+// again.
 
 /// How many releases there are: the version an up-to-date install records.
 pub(super) const VERSION: u32 = RELEASES.len() as u32;
@@ -138,32 +133,16 @@ mod tests {
     }
 
     #[test]
-    fn a_later_release_leaves_an_earlier_ones_settings_to_the_player() {
+    fn an_install_already_at_this_version_is_not_touched_again() {
         let temp = tempfile::tempdir().unwrap();
         let prefs = temp.path().join("Game.prefs");
-        // Shadows back on by the player after the first release applied.
-        std::fs::write(
-            &prefs,
-            "    shadow_quality = 2,\n    lock_fullscreen_cursor_to_window = 0,\n",
-        )
-        .unwrap();
-        assert_eq!(optimize_since(&prefs, 1).unwrap(), 1);
+        // Shadows back on by the player after the defaults were applied.
+        std::fs::write(&prefs, "    shadow_quality = 2,\n").unwrap();
+        assert_eq!(optimize_since(&prefs, VERSION).unwrap(), 0);
         assert_eq!(
             std::fs::read_to_string(&prefs).unwrap(),
-            "    shadow_quality = 2,\n    lock_fullscreen_cursor_to_window = 1,\n"
+            "    shadow_quality = 2,\n"
         );
-    }
-
-    #[test]
-    fn a_quoted_value_is_replaced_whole() {
-        let mut changed = 0;
-        let line = rewrite(
-            "                primary_adapter = '2560,1440,165',\n",
-            &[("primary_adapter", "'windowed'")],
-            &mut changed,
-        );
-        assert_eq!(line, "                primary_adapter = 'windowed',\n");
-        assert_eq!(changed, 1);
     }
 
     #[test]

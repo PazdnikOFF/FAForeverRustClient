@@ -291,8 +291,7 @@ async fn optimize_graphics(ctx: &ServiceCtx, out: &EventSink) {
             Text::new("notifications.msg.macGraphics").with("count", changed.to_string()),
             "Graphics optimised for this Mac",
             format!(
-                "{changed} settings changed: shadows, vertical sync, antialiasing and bloom are off, \
-                 and the game opens as a borderless full-screen window. \
+                "{changed} settings changed: shadows, vertical sync, antialiasing and bloom are off. \
                  They apply the next time the game starts."
             ),
             None,

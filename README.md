@@ -8,8 +8,7 @@
 > runtime, a private Java runtime for FAF's ICE adapter, and Forged Alliance
 > itself from your Steam library (Steam Guard supported), all with progress,
 > into one client-owned folder. Games then start from the lobby through that
-> Wine, borderless full screen, with the cursor kept in the game and Mac
-> graphics defaults applied. See [macOS (Apple silicon)](#macos-apple-silicon)
+> Wine, with the cursor kept in the game and Mac graphics defaults applied. See [macOS (Apple silicon)](#macos-apple-silicon)
 > below. Everything else is upstream, unchanged.
 
 A modular FAF (Supreme Commander: Forged Alliance Forever) client in **Rust + Tauri**,
@@ -145,13 +144,13 @@ and never stored. After setup the launcher runs the game through that Wine and
 prefix by itself; the Linux-style launch wrapper setting still overrides it.
 
 On the first start the client also gives the game Mac defaults, once: shadows,
-vertical sync, antialiasing and bloom off (the settings that measured
-costliest under Wine on Apple silicon), and a windowed game that
-`fa-window.exe`, a tiny helper built from `natives-src/fa-window` with
-`rustc` alone, turns into a borderless full-screen window. Unlike Direct3D's
-exclusive full screen it is not minimised when another display gets the
-focus, and the helper keeps the cursor inside the game while it is active.
-Wine runs with MSync. Settings, Game can apply the defaults again.
+vertical sync, antialiasing and bloom off, the settings that measured
+costliest under Wine on Apple silicon. `fa-window.exe`, a tiny helper built
+from `natives-src/fa-window` with `rustc` alone, runs beside the game: it
+brings the game's window forward when it starts (macOS no longer lets a
+background application take the focus) and keeps the cursor inside the game
+while it is active, so the screen edge scrolls the map instead of leading to
+another display. Wine runs with MSync. Settings, Game can apply the defaults again.
 
 ```bash
 pnpm install
