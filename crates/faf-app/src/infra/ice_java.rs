@@ -212,7 +212,7 @@ impl JavaAdapter {
     async fn spawn_and_connect(
         &self,
         params: &IceParams,
-        ice: &IceServers,
+        force_relay: bool,
         rpc_port: u16,
         gpg_port: u16,
     ) -> Result<(JsonRpcClient, mpsc::Receiver<RpcNotification>), String> {
@@ -242,7 +242,7 @@ impl JavaAdapter {
             "--gpgnet-port".into(),
             gpg_port.to_string(),
         ]);
-        if ice.force_relay {
+        if force_relay {
             args.push("--force-relay".into());
         }
         let windows = *self.debug_windows.lock().unwrap();
@@ -307,6 +307,49 @@ impl JavaAdapter {
             }
         }
     }
+
+    /// [`Self::spawn_and_connect`] on fresh ports, a few times.
+    ///
+    /// Reserving a port means binding it and letting it go, so the numbers
+    /// are free when they are chosen and not necessarily when the adapter
+    /// binds them a moment later. Losing that race cost a fifteen second
+    /// wait on the RPC connect and then a join that failed with nothing in
+    /// the log to say why, so it is worth another go with fresh numbers.
+    async fn spawn_with_retries(
+        &self,
+        params: &IceParams,
+        force_relay: bool,
+    ) -> Result<(u16, JsonRpcClient, mpsc::Receiver<RpcNotification>), String> {
+        let mut attempt = 0;
+        loop {
+            attempt += 1;
+            // Both at once, so they cannot come back as the same number: see
+            // `infra::free_ports`.
+            let ports = free_ports(2).ok_or("could not reserve the adapter's ports")?;
+            let (rpc_port, gpg_port) = (ports[0], ports[1]);
+            match self
+                .spawn_and_connect(params, force_relay, rpc_port, gpg_port)
+                .await
+            {
+                Ok((rpc, notifications)) => return Ok((gpg_port, rpc, notifications)),
+                Err(reason) if attempt < PORT_ATTEMPTS => tracing::warn!(
+                    attempt,
+                    rpc_port,
+                    gpgnet_port = gpg_port,
+                    %reason,
+                    "the ICE adapter did not answer on the ports it was given; retrying"
+                ),
+                Err(reason) => return Err(reason),
+            }
+        }
+    }
+
+    /// End the adapter process, if one is running.
+    fn kill_child(&self) {
+        if let Some(mut child) = self.child.lock().unwrap().take() {
+            let _ = child.start_kill();
+        }
+    }
 }
 
 #[async_trait]
@@ -319,43 +362,46 @@ impl IcePort for JavaAdapter {
             return Err("the optional Java ICE adapter is not installed".into());
         }
 
-        // ICE servers (the Java adapter doesn't fetch these itself).
+        // The ICE session and the adapter, at the same time. The API takes
+        // around ten seconds to hand out a session and the JVM a few to come
+        // up; one after the other they were the whole wait between the lobby
+        // starting the game and the game appearing. The official client
+        // overlaps them the same way. The adapter only needs the session for
+        // `--force-relay`, which the API rarely asks for: when it does, the
+        // adapter already started is replaced by one started with the flag.
         let asked = std::time::Instant::now();
-        let ice =
-            fetch_ice_servers_retrying(&self.http, &self.config.api_base, &token, params.game_id)
-                .await?;
-        tracing::info!(
-            game_id = params.game_id,
-            seconds = asked.elapsed().as_secs_f32(),
-            "the ICE session arrived"
-        );
-
-        // Reserving a port means binding it and letting it go, so the numbers
-        // are free when they are chosen and not necessarily when the adapter
-        // binds them a moment later. Losing that race cost a fifteen second
-        // wait on the RPC connect and then a join that failed with nothing in
-        // the log to say why, so it is worth another go with fresh numbers.
-        let mut attempt = 0;
-        let (gpg_port, rpc, mut notifications) = loop {
-            attempt += 1;
-            // Both at once, so they cannot come back as the same number: see
-            // `infra::free_ports`.
-            let ports = free_ports(2).ok_or("could not reserve the adapter's ports")?;
-            let (rpc_port, gpg_port) = (ports[0], ports[1]);
-            match self
-                .spawn_and_connect(&params, &ice, rpc_port, gpg_port)
-                .await
-            {
-                Ok((rpc, notifications)) => break (gpg_port, rpc, notifications),
-                Err(reason) if attempt < PORT_ATTEMPTS => tracing::warn!(
-                    attempt,
-                    rpc_port,
-                    gpgnet_port = gpg_port,
-                    %reason,
-                    "the ICE adapter did not answer on the ports it was given; retrying"
-                ),
-                Err(reason) => return Err(reason),
+        let fetch = async {
+            let ice = fetch_ice_servers_retrying(
+                &self.http,
+                &self.config.api_base,
+                &token,
+                params.game_id,
+            )
+            .await;
+            tracing::info!(
+                game_id = params.game_id,
+                seconds = asked.elapsed().as_secs_f32(),
+                "the ICE session arrived"
+            );
+            ice
+        };
+        let (ice, started) = tokio::join!(fetch, self.spawn_with_retries(&params, false));
+        let ice = match ice {
+            Ok(ice) => ice,
+            Err(reason) => {
+                if started.is_ok() {
+                    self.kill_child();
+                }
+                return Err(reason);
             }
+        };
+        let (gpg_port, rpc, mut notifications) = match started {
+            Ok(_) if ice.force_relay => {
+                tracing::info!("the ICE session asks for relays only; restarting the adapter");
+                self.kill_child();
+                self.spawn_with_retries(&params, true).await?
+            }
+            started => started?,
         };
 
         rpc.call("setIceServers", vec![Value::Array(ice.servers)]);
