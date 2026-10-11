@@ -69,6 +69,8 @@ unsafe extern "system" {
     fn GetForegroundWindow() -> Hwnd;
     fn GetCursorPos(point: *mut Point) -> i32;
     fn SetCursorPos(x: i32, y: i32) -> i32;
+    fn ShowWindow(hwnd: Hwnd, cmd: i32) -> i32;
+    fn SetForegroundWindow(hwnd: Hwnd) -> i32;
 }
 
 #[link(name = "kernel32", kind = "raw-dylib")]
@@ -97,6 +99,7 @@ const SWP_NOACTIVATE: u32 = 0x10;
 const SWP_FRAMECHANGED: u32 = 0x20;
 const SWP_NOOWNERZORDER: u32 = 0x200;
 const MONITOR_DEFAULTTONEAREST: u32 = 2;
+const SW_RESTORE: i32 = 9;
 const PROCESS_QUERY_LIMITED_INFORMATION: u32 = 0x1000;
 const SYNCHRONIZE: u32 = 0x0010_0000;
 const WAIT_OBJECT_0: u32 = 0;
@@ -107,6 +110,10 @@ const FIND_TIMEOUT_MS: u32 = 180_000;
 /// 125 checks a second: below what a hand on a mouse can outrun at the edge
 /// of a screen, and still nothing in CPU terms.
 const POLL_MS: u32 = 8;
+/// How long after the window appears it is brought up, in polls: a minute.
+/// Long enough for a slow first start, short enough never to pull the game
+/// forward over something the player went to on purpose.
+const BRING_UP_POLLS: u32 = 60_000 / POLL_MS;
 
 /// Whether `pid` runs `ForgedAlliance.exe`, compared without case.
 fn is_game(pid: u32) -> bool {
@@ -208,6 +215,27 @@ fn make_borderless(hwnd: Hwnd) {
     }
 }
 
+/// Bring the game up the first time, and only then.
+///
+/// The game starts while the client is the active application, and macOS no
+/// longer lets an application take the focus by itself; the game's window
+/// comes up minimised to the Dock as a result. Until it has once been the
+/// foreground window, it is restored and brought forward. After that it is
+/// the player's: minimising it on purpose is left alone. Returns whether the
+/// game has reached the front.
+fn bring_up(hwnd: Hwnd) -> bool {
+    unsafe {
+        if IsIconic(hwnd) == 0 && GetForegroundWindow() == hwnd {
+            return true;
+        }
+        if IsIconic(hwnd) != 0 {
+            ShowWindow(hwnd, SW_RESTORE);
+        }
+        SetForegroundWindow(hwnd);
+    }
+    false
+}
+
 /// Keep the cursor inside the window while it is the foreground one.
 fn confine(hwnd: Hwnd) {
     unsafe {
@@ -244,6 +272,8 @@ pub extern "system" fn mainCRTStartup() -> ! {
     };
     let process = unsafe { OpenProcess(SYNCHRONIZE, 0, pid) };
     let mut tick: u32 = 0;
+    let mut up = false;
+    let mut since_found: u32 = 0;
     loop {
         if !process.is_null() && unsafe { WaitForSingleObject(process, 0) } == WAIT_OBJECT_0 {
             unsafe { ExitProcess(0) }
@@ -254,15 +284,25 @@ pub extern "system" fn mainCRTStartup() -> ! {
         if tick % 64 == 0 {
             if unsafe { IsWindow(hwnd) } == 0 {
                 match find_game() {
-                    Some((found, _)) => hwnd = found,
+                    Some((found, _)) => {
+                        hwnd = found;
+                        up = false;
+                        since_found = 0;
+                    }
                     None if process.is_null() => unsafe { ExitProcess(0) },
                     None => {}
                 }
+            }
+            if !up && since_found < BRING_UP_POLLS {
+                // Restored before the frame comes off: a minimised window has
+                // no monitor-sized rectangle to give it.
+                up = bring_up(hwnd);
             }
             make_borderless(hwnd);
         }
         confine(hwnd);
         tick = tick.wrapping_add(1);
+        since_found = since_found.saturating_add(1);
         unsafe { Sleep(POLL_MS) };
     }
 }
