@@ -28,6 +28,7 @@
 
 mod connectivity;
 mod download;
+mod focus;
 mod graphics;
 mod steam;
 mod wine;
@@ -282,6 +283,9 @@ pub(crate) fn start_window_helper(wine: &Path, prefix: &str, msync: bool) {
         Ok(_) => tracing::info!("started the borderless window helper"),
         Err(error) => tracing::warn!(%error, "could not start the borderless window helper"),
     }
+    // The helper restores the window inside Wine; only the client, as the
+    // active application, can make macOS bring it to the front.
+    focus::hand_focus_to_game();
 }
 
 /// Whether Rosetta 2 can run an Intel binary right now. On an Intel Mac there
