@@ -463,16 +463,24 @@ async fn fetch_ice_servers_retrying(
 /// Why the ICE session could not be had: worth another try, or not.
 #[derive(Debug, PartialEq, Eq)]
 enum IceSessionError {
-    /// 503 or 429: the API's own "not now". The two statuses Java retries.
+    /// 503 or 429, the API's own "not now" and the two statuses Java
+    /// retries, and 502 or 504, the gateway in front of the API saying the
+    /// service behind it did not answer. The API is reached through
+    /// Cloudflare, which answers `502: error code: 502` while the session
+    /// service restarts; a launch failed on that at the first try.
     Busy(String),
     Failed(String),
 }
 
 impl IceSessionError {
     fn for_status(status: reqwest::StatusCode, reason: String) -> Self {
-        if status == reqwest::StatusCode::SERVICE_UNAVAILABLE
-            || status == reqwest::StatusCode::TOO_MANY_REQUESTS
-        {
+        if matches!(
+            status,
+            reqwest::StatusCode::SERVICE_UNAVAILABLE
+                | reqwest::StatusCode::TOO_MANY_REQUESTS
+                | reqwest::StatusCode::BAD_GATEWAY
+                | reqwest::StatusCode::GATEWAY_TIMEOUT
+        ) {
             Self::Busy(reason)
         } else {
             Self::Failed(reason)
@@ -673,10 +681,13 @@ mod tests {
 
     #[test]
     fn only_the_apis_not_now_answers_are_tried_again() {
-        // Java's `apiRetrySpec` retries exactly these two.
+        // Java's `apiRetrySpec` retries the first two; the gateway's own
+        // "the service behind me did not answer" is as temporary.
         for busy in [
             reqwest::StatusCode::SERVICE_UNAVAILABLE,
             reqwest::StatusCode::TOO_MANY_REQUESTS,
+            reqwest::StatusCode::BAD_GATEWAY,
+            reqwest::StatusCode::GATEWAY_TIMEOUT,
         ] {
             assert_eq!(
                 IceSessionError::for_status(busy, "x".into()),
