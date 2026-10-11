@@ -1122,6 +1122,7 @@ dependencies = [
  "base64 0.22.1",
  "chrono",
  "directories",
+ "dispatch2",
  "faf-domain",
  "flate2",
  "futures-util",

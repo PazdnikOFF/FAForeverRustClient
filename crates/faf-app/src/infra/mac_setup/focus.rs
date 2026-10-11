@@ -12,6 +12,12 @@
 //! game is not pulled in front of it. Activation also moves to the Space the
 //! game's window is on, which is what lifts it over another full-screen
 //! window.
+//!
+//! As soon as the game's process exists, the client also yields activation to
+//! it (macOS 14 and later): the Wine Mac driver asks for activation itself when
+//! the game shows its window, and that request is honoured only for an
+//! application the active one yielded to. Without it, Direct3D's full screen
+//! saw itself inactive and minimised the window to the Dock.
 
 use std::time::{Duration, Instant};
 
@@ -49,19 +55,60 @@ pub(crate) fn hand_focus_to_game() {
     }
     std::thread::spawn(|| {
         let started = Instant::now();
+        let mut yielded = None;
         while started.elapsed() < WINDOW {
             std::thread::sleep(POLL);
-            if !client_is_active() {
+            let Some(pid) = game_pid() else { continue };
+            if yielded != Some(pid) {
+                yielded = Some(pid);
+                yield_to(pid);
+            }
+            if game_is_active(pid) {
+                tracing::info!("the game is the active application");
                 return;
             }
-            if let Some(pid) = game_pid() {
-                if activate(pid) {
-                    tracing::info!("handed the focus to the game");
-                    return;
-                }
+            if !client_is_active() {
+                tracing::info!("the client is no longer active; the game is left where it is");
+                return;
+            }
+            if activate(pid) {
+                tracing::info!("handed the focus to the game");
+                return;
             }
         }
+        tracing::warn!(
+            found = yielded.is_some(),
+            "the game did not become the active application"
+        );
     });
+}
+
+/// Let the game take activation when it asks for it. On the main thread, as
+/// AppKit requires, and without waiting for it.
+#[cfg(target_os = "macos")]
+fn yield_to(pid: i32) {
+    dispatch2::DispatchQueue::main().exec_async(move || {
+        use objc2::runtime::NSObjectProtocol;
+        use objc2::{sel, MainThreadMarker};
+        use objc2_app_kit::{NSApplication, NSRunningApplication};
+        // Safety: this closure runs on the main queue, which is the main thread.
+        let mtm = unsafe { MainThreadMarker::new_unchecked() };
+        let app = NSApplication::sharedApplication(mtm);
+        if !app.respondsToSelector(sel!(yieldActivationToApplication:)) {
+            return;
+        }
+        if let Some(game) = NSRunningApplication::runningApplicationWithProcessIdentifier(pid) {
+            app.yieldActivationToApplication(&game);
+            tracing::info!("yielded activation to the game");
+        }
+    });
+}
+
+#[cfg(target_os = "macos")]
+fn game_is_active(pid: i32) -> bool {
+    use objc2_app_kit::NSRunningApplication;
+    NSRunningApplication::runningApplicationWithProcessIdentifier(pid)
+        .is_some_and(|game| game.isActive())
 }
 
 #[cfg(target_os = "macos")]
@@ -81,8 +128,10 @@ fn activate(pid: i32) -> bool {
         return true;
     }
     game.activateWithOptions(NSApplicationActivationOptions::ActivateAllWindows);
-    std::thread::sleep(Duration::from_millis(200));
-    game.isActive()
+    // Activation is asynchronous: ask a fresh instance, the old one's state
+    // is a snapshot.
+    std::thread::sleep(Duration::from_millis(300));
+    game_is_active(pid)
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -92,6 +141,14 @@ fn client_is_active() -> bool {
 
 #[cfg(not(target_os = "macos"))]
 fn activate(_pid: i32) -> bool {
+    false
+}
+
+#[cfg(not(target_os = "macos"))]
+fn yield_to(_pid: i32) {}
+
+#[cfg(not(target_os = "macos"))]
+fn game_is_active(_pid: i32) -> bool {
     false
 }
 

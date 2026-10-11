@@ -320,9 +320,15 @@ impl IcePort for JavaAdapter {
         }
 
         // ICE servers (the Java adapter doesn't fetch these itself).
+        let asked = std::time::Instant::now();
         let ice =
             fetch_ice_servers_retrying(&self.http, &self.config.api_base, &token, params.game_id)
                 .await?;
+        tracing::info!(
+            game_id = params.game_id,
+            seconds = asked.elapsed().as_secs_f32(),
+            "the ICE session arrived"
+        );
 
         // Reserving a port means binding it and letting it go, so the numbers
         // are free when they are chosen and not necessarily when the adapter

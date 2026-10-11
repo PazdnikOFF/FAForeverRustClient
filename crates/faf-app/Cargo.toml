@@ -47,10 +47,11 @@ chrono = "0.4"
 
 # Handing the focus to the game on macOS (see infra/mac_setup/focus.rs). Both
 # are already in the build through Tauri's own windowing (tao), from the same
-# publisher; this only names them directly, with the one AppKit class used.
+# publisher; this only names them directly, with the AppKit classes used.
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
-objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSRunningApplication"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = ["std", "libc", "NSApplication", "NSResponder", "NSRunningApplication"] }
+dispatch2 = { version = "0.3", default-features = false, features = ["std", "objc2"] }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
