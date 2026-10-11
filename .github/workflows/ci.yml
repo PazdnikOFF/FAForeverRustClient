@@ -106,37 +106,9 @@ jobs:
       - name: cargo deny
         run: cargo deny check licenses bans sources
 
-  # GitHub lists every author and co-author on the default branch as a
-  # contributor, so a commit co-authored by an AI assistant or a bot account
-  # puts that account on the repository's page. Caught here, at the pull
-  # request, where removing the line means amending a commit message rather
-  # than rewriting develop. See scripts/check-commit-authors.mjs.
-  commit-authors:
-    name: Commit authors - people only
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: No AI or bot authors and co-authors
-        env:
-          EVENT: ${{ github.event_name }}
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-          BEFORE: ${{ github.event.before }}
-          AFTER: ${{ github.sha }}
-        run: |
-          if [ "$EVENT" = "pull_request" ]; then
-            range="$BASE..$HEAD"
-          elif [ -n "$BEFORE" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
-            range="$BEFORE..$AFTER"
-          else
-            # A new branch, or a force-push whose old tip is gone: the whole
-            # history it now has.
-            range="$AFTER"
-          fi
-          node scripts/check-commit-authors.mjs "$range"
+  # The upstream `commit-authors` job (scripts/check-commit-authors.mjs) is
+  # left out of this fork: its macOS work is written with an AI assistant and
+  # says so in the commits, which is what that job refuses.
 
   frontend:
     name: Frontend - lint + typecheck + test + build
