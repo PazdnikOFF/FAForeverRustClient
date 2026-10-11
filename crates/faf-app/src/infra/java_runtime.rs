@@ -39,6 +39,18 @@ pub(crate) fn preferred_java_path() -> String {
             roots.push(PathBuf::from(directory).join("Programs").join("FAF Client"));
         }
     }
+    if let Some(bundled) = resolve_java_from_roots(&roots) {
+        return bundled.to_string_lossy().into_owned();
+    }
+
+    // On a Mac the runtime the setup assistant installed, ahead of anything
+    // the machine happens to have: the client was tested against that one,
+    // and a system Java is a version nobody here chose.
+    if let Some(java) = crate::infra::mac_setup::managed_java() {
+        return java.to_string_lossy().into_owned();
+    }
+
+    let mut roots = Vec::new();
     if let Some(java_home) = std::env::var_os("JAVA_HOME") {
         roots.push(PathBuf::from(java_home));
     }

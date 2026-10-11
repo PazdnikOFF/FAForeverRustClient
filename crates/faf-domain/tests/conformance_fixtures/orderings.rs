@@ -430,6 +430,7 @@ slice_table! {
     galactic_war => "galacticWar",
     guides => "guides",
     client_update => "clientUpdate",
+    mac_setup => "macSetup",
     settings => "settings",
     changelog => "changelog",
 }

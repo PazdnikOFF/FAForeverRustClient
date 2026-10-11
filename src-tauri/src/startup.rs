@@ -79,6 +79,19 @@ pub(crate) fn locate_bundled_helpers(app: &tauri::App) {
         }
     }
 
+    // The Mac window helper (`fa-window.exe`), run inside Wine beside the game.
+    if std::env::var("FAF_FA_WINDOW_HELPER")
+        .unwrap_or_default()
+        .is_empty()
+    {
+        if let Ok(resource_dir) = app.path().resource_dir() {
+            let helper = resource_dir.join("natives").join("fa-window.exe");
+            if helper.is_file() {
+                std::env::set_var("FAF_FA_WINDOW_HELPER", helper);
+            }
+        }
+    }
+
     if std::env::var("FAF_ICE_ADAPTER_JAR")
         .unwrap_or_default()
         .is_empty()

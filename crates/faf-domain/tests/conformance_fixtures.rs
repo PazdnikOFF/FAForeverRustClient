@@ -4596,6 +4596,105 @@ fn cases() -> Vec<Case> {
                 .into(),
             ],
         ),
+        // ── Mac setup ────────────────────────────────────────────────────
+        case(
+            "a Mac sets itself up, signs in to Steam and downloads the game",
+            vec![
+                MacSetupEvent::Probed {
+                    probe: MacSetupProbe {
+                        supported: true,
+                        rosetta: true,
+                        wine: false,
+                        prefix: false,
+                        connectivity: false,
+                        game: false,
+                        root_dir: "/data/macOS".into(),
+                        game_dir: String::new(),
+                        steam_user: String::new(),
+                        free_mb: 50_000,
+                    },
+                }
+                .into(),
+                MacSetupEvent::AssistantShown.into(),
+                MacSetupEvent::StepStarted {
+                    step: SetupStep::Wine,
+                }
+                .into(),
+                MacSetupEvent::Progressed {
+                    progress: StepProgress {
+                        step: Some(SetupStep::Wine),
+                        permille: Some(400),
+                        done_mb: 70,
+                        total_mb: 173,
+                    },
+                }
+                .into(),
+                // A probe while a step runs must not flip it back to missing.
+                MacSetupEvent::Probed {
+                    probe: MacSetupProbe {
+                        supported: true,
+                        rosetta: true,
+                        root_dir: "/data/macOS".into(),
+                        ..MacSetupProbe::default()
+                    },
+                }
+                .into(),
+                MacSetupEvent::StepFinished {
+                    step: SetupStep::Wine,
+                }
+                .into(),
+                MacSetupEvent::StepStarted {
+                    step: SetupStep::Prefix,
+                }
+                .into(),
+                MacSetupEvent::StepFailed {
+                    step: SetupStep::Prefix,
+                    reason: "disk full".into(),
+                }
+                .into(),
+                MacSetupEvent::StepStarted {
+                    step: SetupStep::Game,
+                }
+                .into(),
+                MacSetupEvent::SteamPhaseChanged {
+                    phase: SteamPhase::NeedsCode {
+                        kind: SteamGuardKind::Email {
+                            hint: "pl***@example.com".into(),
+                        },
+                        retry: false,
+                    },
+                }
+                .into(),
+                MacSetupEvent::SteamPhaseChanged {
+                    phase: SteamPhase::Downloading,
+                }
+                .into(),
+                MacSetupEvent::StepCancelled {
+                    step: SetupStep::Game,
+                }
+                .into(),
+                MacSetupEvent::SteamPhaseChanged {
+                    phase: SteamPhase::Idle,
+                }
+                .into(),
+                MacSetupEvent::Probed {
+                    probe: MacSetupProbe {
+                        supported: true,
+                        rosetta: true,
+                        wine: true,
+                        prefix: true,
+                        connectivity: true,
+                        game: true,
+                        root_dir: "/data/macOS".into(),
+                        game_dir: "/data/macOS/game".into(),
+                        steam_user: "player".into(),
+                        free_mb: 45_000,
+                    },
+                }
+                .into(),
+                MacSetupEvent::AssistantHidden.into(),
+            ],
+        ),
         // ── tournaments / tutorials ──────────────────────────────────────
         case(
             "the account's Discord handle is read, then changed",

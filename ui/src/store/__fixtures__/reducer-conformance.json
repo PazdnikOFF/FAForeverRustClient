@@ -7037,6 +7037,761 @@
       ]
     },
     {
+      "name": "a Mac sets itself up, signs in to Steam and downloads the game",
+      "steps": [
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "probe": {
+                  "connectivity": false,
+                  "freeMb": 50000,
+                  "game": false,
+                  "gameDir": "",
+                  "prefix": false,
+                  "rootDir": "/data/macOS",
+                  "rosetta": true,
+                  "steamUser": "",
+                  "supported": true,
+                  "wine": false
+                }
+              },
+              "type": "probed"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": false,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 50000,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "missing"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "type": "assistantShown"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 50000,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "missing"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "step": "wine"
+              },
+              "type": "stepStarted"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "wine",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 50000,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": "wine",
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "running"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "progress": {
+                  "doneMb": 70,
+                  "permille": 400,
+                  "step": "wine",
+                  "totalMb": 173
+                }
+              },
+              "type": "progressed"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "wine",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 50000,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 70,
+              "permille": 400,
+              "step": "wine",
+              "totalMb": 173
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "running"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "probe": {
+                  "connectivity": false,
+                  "freeMb": 0,
+                  "game": false,
+                  "gameDir": "",
+                  "prefix": false,
+                  "rootDir": "/data/macOS",
+                  "rosetta": true,
+                  "steamUser": "",
+                  "supported": true,
+                  "wine": false
+                }
+              },
+              "type": "probed"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "wine",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 70,
+              "permille": 400,
+              "step": "wine",
+              "totalMb": 173
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "running"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "step": "wine"
+              },
+              "type": "stepFinished"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "missing"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "step": "prefix"
+              },
+              "type": "stepStarted"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "prefix",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "type": "running"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": "prefix",
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "reason": "disk full",
+                "step": "prefix"
+              },
+              "type": "stepFailed"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "step": "game"
+              },
+              "type": "stepStarted"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "game",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "running"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": "game",
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "phase": {
+                  "payload": {
+                    "kind": {
+                      "payload": {
+                        "hint": "pl***@example.com"
+                      },
+                      "type": "email"
+                    },
+                    "retry": false
+                  },
+                  "type": "needsCode"
+                }
+              },
+              "type": "steamPhaseChanged"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "game",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "running"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": "game",
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "payload": {
+                "kind": {
+                  "payload": {
+                    "hint": "pl***@example.com"
+                  },
+                  "type": "email"
+                },
+                "retry": false
+              },
+              "type": "needsCode"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "phase": {
+                  "type": "downloading"
+                }
+              },
+              "type": "steamPhaseChanged"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": "game",
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "running"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": "game",
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "downloading"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "step": "game"
+              },
+              "type": "stepCancelled"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "downloading"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "phase": {
+                  "type": "idle"
+                }
+              },
+              "type": "steamPhaseChanged"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "missing"
+            },
+            "freeMb": 0,
+            "game": {
+              "type": "missing"
+            },
+            "gameDir": "",
+            "prefix": {
+              "payload": {
+                "reason": "disk full"
+              },
+              "type": "failed"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "payload": {
+                "probe": {
+                  "connectivity": true,
+                  "freeMb": 45000,
+                  "game": true,
+                  "gameDir": "/data/macOS/game",
+                  "prefix": true,
+                  "rootDir": "/data/macOS",
+                  "rosetta": true,
+                  "steamUser": "player",
+                  "supported": true,
+                  "wine": true
+                }
+              },
+              "type": "probed"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": true,
+            "checked": true,
+            "connectivity": {
+              "type": "ready"
+            },
+            "freeMb": 45000,
+            "game": {
+              "type": "ready"
+            },
+            "gameDir": "/data/macOS/game",
+            "prefix": {
+              "type": "ready"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "player",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        },
+        {
+          "event": {
+            "event": {
+              "type": "assistantHidden"
+            },
+            "kind": "MacSetup"
+          },
+          "expected": {
+            "active": null,
+            "assistantOpen": false,
+            "checked": true,
+            "connectivity": {
+              "type": "ready"
+            },
+            "freeMb": 45000,
+            "game": {
+              "type": "ready"
+            },
+            "gameDir": "/data/macOS/game",
+            "prefix": {
+              "type": "ready"
+            },
+            "progress": {
+              "doneMb": 0,
+              "permille": null,
+              "step": null,
+              "totalMb": 0
+            },
+            "rootDir": "/data/macOS",
+            "rosetta": {
+              "type": "ready"
+            },
+            "steam": {
+              "type": "idle"
+            },
+            "steamUser": "player",
+            "supported": true,
+            "wine": {
+              "type": "ready"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "the account's Discord handle is read, then changed",
       "steps": [
         {
@@ -109055,6 +109810,40 @@
       "playMode": "custom",
       "status": "disconnected",
       "vetoes": []
+    },
+    "macSetup": {
+      "active": null,
+      "assistantOpen": false,
+      "checked": false,
+      "connectivity": {
+        "type": "missing"
+      },
+      "freeMb": 0,
+      "game": {
+        "type": "missing"
+      },
+      "gameDir": "",
+      "prefix": {
+        "type": "missing"
+      },
+      "progress": {
+        "doneMb": 0,
+        "permille": null,
+        "step": null,
+        "totalMb": 0
+      },
+      "rootDir": "",
+      "rosetta": {
+        "type": "missing"
+      },
+      "steam": {
+        "type": "idle"
+      },
+      "steamUser": "",
+      "supported": false,
+      "wine": {
+        "type": "missing"
+      }
     },
     "mapGenerator": {
       "availableVersions": [],

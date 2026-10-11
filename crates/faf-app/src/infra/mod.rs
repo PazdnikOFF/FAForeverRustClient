@@ -86,6 +86,7 @@ pub mod leaderboard;
 pub(crate) mod league_keys;
 pub mod lobby_fake;
 pub mod lobby_ws;
+pub mod mac_setup;
 pub mod map_generator;
 pub mod maps;
 pub mod mods;
@@ -438,6 +439,10 @@ pub fn client_folder(kind: &str) -> Result<std::path::PathBuf, String> {
         }
         // A file, not a directory: the shell reveals it in its parent.
         "gamePrefs" => mods::game_prefs_path(),
+        // Everything the Mac setup installed: see `mac_setup`.
+        "macSetup" => mac_setup::Layout::resolve()
+            .map(|layout| layout.root().to_path_buf())
+            .ok_or("could not resolve the client's data folder")?,
         other => return Err(format!("unknown folder '{other}'")),
     };
     Ok(path)
@@ -604,6 +609,7 @@ pub fn fake_ports() -> Ports {
         changelog: Arc::new(FakeChangelog),
         uploads: Arc::new(FakeUploads),
         client_update: Arc::new(FakeClientUpdates),
+        mac_setup: Arc::new(mac_setup::NoMacSetup),
         galactic_war: Arc::new(FakeGalacticWar),
         game_cache: Arc::new(game_cache::NoGameCache),
         notification_sounds: Arc::new(notification_sounds::NoStoredSounds),
@@ -794,6 +800,7 @@ pub fn real_ports() -> Ports {
         changelog,
         uploads,
         client_update,
+        mac_setup: Arc::new(mac_setup::MacSetup::faf()),
         galactic_war,
         game_cache: Arc::new(game_cache::DiskGameCache),
         notification_sounds: Arc::new(notification_sounds::StoredSounds),

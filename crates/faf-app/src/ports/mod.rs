@@ -19,6 +19,7 @@ pub mod guides;
 pub mod ice;
 pub mod leaderboard;
 pub mod lobby;
+pub mod mac_setup;
 pub mod map_generator;
 pub mod maps;
 pub mod mods;
@@ -52,6 +53,7 @@ pub use guides::{DeviceCode, GuidesPort};
 pub use ice::{ConnectivitySession, IceDebugWindows, IceParams, IcePort, RelayMsg};
 pub use leaderboard::LeaderboardPort;
 pub use lobby::{LobbyPort, LobbyUpdate, ServerNoticeStyle};
+pub use mac_setup::{MacSetupPort, SteamUpdate, StepUpdate};
 pub use map_generator::{GeneratorUpdate, MapGeneratorPort};
 pub use maps::{MapSearchPage, MapsPort};
 pub use mods::{ModPrepFailure, ModSearchPage, ModsPort};
@@ -161,6 +163,9 @@ pub struct Ports {
     /// Replaces the *client*, not the game. Distinct from `updater` above,
     /// which patches the Forged Alliance install.
     pub client_update: Arc<dyn ClientUpdatePort>,
+    /// Wine, the prefix, the connectivity runtime and the game files a Mac
+    /// needs. Inert everywhere else.
+    pub mac_setup: Arc<dyn MacSetupPort>,
     /// Installs and starts the separate Galactic War application. Unrelated to
     /// `process` and `updater`: Galactic War is not Forged Alliance and does
     /// not go through the lobby.

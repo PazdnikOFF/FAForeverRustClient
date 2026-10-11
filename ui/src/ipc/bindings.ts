@@ -79,9 +79,9 @@ export type AdminArticle = {
 	updatedAt: number | null,
 };
 
-export type AppCommand = { kind: "Session"; command: SessionCommand } | { kind: "Auth"; command: AuthCommand } | { kind: "Nav"; command: NavCommand } | { kind: "Notifications"; command: NotificationCommand } | { kind: "Chat"; command: ChatCommand } | { kind: "Clan"; command: ClanCommand } | { kind: "Coop"; command: CoopCommand } | { kind: "Lobby"; command: LobbyCommand } | { kind: "Replays"; command: ReplayCommand } | { kind: "Maps"; command: MapsCommand } | { kind: "MapGenerator"; command: MapGeneratorCommand } | { kind: "Mods"; command: ModsCommand } | { kind: "Leaderboard"; command: LeaderboardCommand } | { kind: "PlayerCard"; command: PlayerCardCommand } | { kind: "Reporting"; command: ReportingCommand } | { kind: "Reviews"; command: ReviewsCommand } | { kind: "Social"; command: SocialCommand } | { kind: "Streams"; command: StreamsCommand } | { kind: "Tourney"; command: TourneyCommand } | { kind: "Training"; command: TrainingCommand } | { kind: "Tutorials"; command: TutorialsCommand } | { kind: "Changelog"; command: ChangelogCommand } | { kind: "Events"; command: EventsCommand } | { kind: "Uploads"; command: UploadsCommand } | { kind: "GalacticWar"; command: GalacticWarCommand } | { kind: "Guides"; command: GuidesCommand } | { kind: "ClientUpdate"; command: ClientUpdateCommand } | { kind: "Settings"; command: SettingsCommand };
+export type AppCommand = { kind: "Session"; command: SessionCommand } | { kind: "Auth"; command: AuthCommand } | { kind: "Nav"; command: NavCommand } | { kind: "Notifications"; command: NotificationCommand } | { kind: "Chat"; command: ChatCommand } | { kind: "Clan"; command: ClanCommand } | { kind: "Coop"; command: CoopCommand } | { kind: "Lobby"; command: LobbyCommand } | { kind: "Replays"; command: ReplayCommand } | { kind: "Maps"; command: MapsCommand } | { kind: "MapGenerator"; command: MapGeneratorCommand } | { kind: "Mods"; command: ModsCommand } | { kind: "Leaderboard"; command: LeaderboardCommand } | { kind: "PlayerCard"; command: PlayerCardCommand } | { kind: "Reporting"; command: ReportingCommand } | { kind: "Reviews"; command: ReviewsCommand } | { kind: "Social"; command: SocialCommand } | { kind: "Streams"; command: StreamsCommand } | { kind: "Tourney"; command: TourneyCommand } | { kind: "Training"; command: TrainingCommand } | { kind: "Tutorials"; command: TutorialsCommand } | { kind: "Changelog"; command: ChangelogCommand } | { kind: "Events"; command: EventsCommand } | { kind: "Uploads"; command: UploadsCommand } | { kind: "GalacticWar"; command: GalacticWarCommand } | { kind: "Guides"; command: GuidesCommand } | { kind: "ClientUpdate"; command: ClientUpdateCommand } | { kind: "MacSetup"; command: MacSetupCommand } | { kind: "Settings"; command: SettingsCommand };
 
-export type AppEvent = { kind: "Session"; event: SessionEvent } | { kind: "Auth"; event: AuthEvent } | { kind: "Nav"; event: NavEvent } | { kind: "Notifications"; event: NotificationEvent } | { kind: "Chat"; event: ChatEvent } | { kind: "Clan"; event: ClanEvent } | { kind: "Coop"; event: CoopEvent } | { kind: "Lobby"; event: LobbyEvent } | { kind: "Replays"; event: ReplayEvent } | { kind: "Maps"; event: MapsEvent } | { kind: "MapGenerator"; event: MapGeneratorEvent } | { kind: "Mods"; event: ModsEvent } | { kind: "Leaderboard"; event: LeaderboardEvent } | { kind: "PlayerCard"; event: PlayerCardEvent } | { kind: "Reporting"; event: ReportingEvent } | { kind: "Reviews"; event: ReviewsEvent } | { kind: "Social"; event: SocialEvent } | { kind: "Streams"; event: StreamsEvent } | { kind: "Tourney"; event: TourneyEvent } | { kind: "Training"; event: TrainingEvent } | { kind: "Tutorials"; event: TutorialsEvent } | { kind: "Changelog"; event: ChangelogEvent } | { kind: "Events"; event: EventsEvent } | { kind: "Uploads"; event: UploadsEvent } | { kind: "GalacticWar"; event: GalacticWarEvent } | { kind: "Guides"; event: GuidesEvent } | { kind: "ClientUpdate"; event: ClientUpdateEvent } | { kind: "Install"; event: InstallEvent } | { kind: "Settings"; event: SettingsEvent };
+export type AppEvent = { kind: "Session"; event: SessionEvent } | { kind: "Auth"; event: AuthEvent } | { kind: "Nav"; event: NavEvent } | { kind: "Notifications"; event: NotificationEvent } | { kind: "Chat"; event: ChatEvent } | { kind: "Clan"; event: ClanEvent } | { kind: "Coop"; event: CoopEvent } | { kind: "Lobby"; event: LobbyEvent } | { kind: "Replays"; event: ReplayEvent } | { kind: "Maps"; event: MapsEvent } | { kind: "MapGenerator"; event: MapGeneratorEvent } | { kind: "Mods"; event: ModsEvent } | { kind: "Leaderboard"; event: LeaderboardEvent } | { kind: "PlayerCard"; event: PlayerCardEvent } | { kind: "Reporting"; event: ReportingEvent } | { kind: "Reviews"; event: ReviewsEvent } | { kind: "Social"; event: SocialEvent } | { kind: "Streams"; event: StreamsEvent } | { kind: "Tourney"; event: TourneyEvent } | { kind: "Training"; event: TrainingEvent } | { kind: "Tutorials"; event: TutorialsEvent } | { kind: "Changelog"; event: ChangelogEvent } | { kind: "Events"; event: EventsEvent } | { kind: "Uploads"; event: UploadsEvent } | { kind: "GalacticWar"; event: GalacticWarEvent } | { kind: "Guides"; event: GuidesEvent } | { kind: "ClientUpdate"; event: ClientUpdateEvent } | { kind: "MacSetup"; event: MacSetupEvent } | { kind: "Install"; event: InstallEvent } | { kind: "Settings"; event: SettingsEvent };
 
 /**  The complete client state. One field per domain slice. */
 export type AppState = {
@@ -112,6 +112,7 @@ export type AppState = {
 	galacticWar: GalacticWarState,
 	guides: GuidesState,
 	clientUpdate: ClientUpdateState,
+	macSetup: MacSetupState,
 	settings: SettingsState,
 	changelog: ChangelogState,
 };
@@ -4331,6 +4332,132 @@ export type LoginLookup = {
 	id: number | null,
 };
 
+export type MacSetupCommand =
+/**
+ *  Look at what is on disk. Runs at startup and opens the assistant once
+ *  when anything is missing.
+ */
+{ type: "probe" } |
+/**
+ *  Install every missing component, in order, stopping at the first that
+ *  fails. Rosetta asks for the administrator password through macOS's own
+ *  dialog; nothing else needs one.
+ */
+{ type: "prepare" } |
+/**  Sign in to Steam and download Forged Alliance into the client's folder. */
+{ type: "steamDownload"; payload: {
+	username: string,
+	password: Secret,
+} } |
+/**  Answer a Steam Guard question. */
+{ type: "steamCode"; payload: {
+	code: Secret,
+} } |
+/**
+ *  Stop a Steam download. What was downloaded stays, and the next download
+ *  resumes from it.
+ */
+{ type: "cancelSteam" } |
+/**
+ *  Stop waiting for the Steam Mobile app and type a Steam Guard code
+ *  instead. The sign-in starts over; the password is not asked again.
+ */
+{ type: "steamUseCode" } |
+/**  Use a Forged Alliance folder the player already has instead. */
+{ type: "useGameFolder"; payload: {
+	path: string,
+} } |
+/**
+ *  Remove the Wine prefix and create a fresh one, for a prefix that was
+ *  damaged. The game and Wine itself stay.
+ */
+{ type: "resetPrefix" } |
+/**
+ *  Delete everything the setup put on this Mac: Wine, the prefix, the
+ *  runtime and the downloaded game. A folder the player adopted is theirs
+ *  and is left alone.
+ */
+{ type: "removeEverything" } |
+/**
+ *  Write the graphics settings that measured fastest on Apple silicon into
+ *  the game's settings. Refused while the game is running, since it
+ *  rewrites them on exit. The outcome arrives as a notification.
+ */
+{ type: "optimizeGraphics" } | { type: "showAssistant" } | { type: "hideAssistant" };
+
+export type MacSetupEvent = { type: "probed"; payload: {
+	probe: MacSetupProbe,
+} } | { type: "stepStarted"; payload: {
+	step: SetupStep,
+} } | { type: "progressed"; payload: {
+	progress: StepProgress,
+} } | { type: "stepFinished"; payload: {
+	step: SetupStep,
+} } | { type: "stepFailed"; payload: {
+	step: SetupStep,
+	reason: string,
+} } |
+/**  A step was stopped on purpose: back to missing, nothing to report. */
+{ type: "stepCancelled"; payload: {
+	step: SetupStep,
+} } | { type: "steamPhaseChanged"; payload: {
+	phase: SteamPhase,
+} } | { type: "assistantShown" } | { type: "assistantHidden" };
+
+/**  What the probe found on disk. */
+export type MacSetupProbe = {
+	/**  Whether this client manages a Wine setup at all: true on a Mac only. */
+	supported: boolean,
+	rosetta: boolean,
+	wine: boolean,
+	prefix: boolean,
+	connectivity: boolean,
+	game: boolean,
+	/**  The folder everything lives in, for "Show in Finder". */
+	rootDir: string,
+	/**  The retail game folder in use, empty while there is none. */
+	gameDir: string,
+	/**
+	 *  The Steam account last used to download the game. Not a secret: it is
+	 *  what fills the sign-in form the next time.
+	 */
+	steamUser: string,
+	/**
+	 *  Free space where the game would be downloaded, in megabytes. Zero when
+	 *  it could not be read.
+	 */
+	freeMb: number,
+};
+
+export type MacSetupState = {
+	/**
+	 *  See [`MacSetupProbe::supported`]. False everywhere until the first
+	 *  probe, so no other platform ever draws the assistant.
+	 */
+	supported: boolean,
+	/**  Whether a probe has completed, so nothing flashes at startup. */
+	checked: boolean,
+	rosetta: StepStatus,
+	wine: StepStatus,
+	prefix: StepStatus,
+	connectivity: StepStatus,
+	game: StepStatus,
+	/**  The step currently running, if any. */
+	active: SetupStep | null,
+	progress: StepProgress,
+	steam: SteamPhase,
+	steamUser: string,
+	rootDir: string,
+	gameDir: string,
+	freeMb: number,
+	/**
+	 *  Whether the assistant window is open. In the state rather than in a
+	 *  component so the settings page, the banner and the first launch all
+	 *  open the same assistant.
+	 */
+	assistantOpen: boolean,
+};
+
 /**  A map being added to or edited in a tournament's own map database. */
 export type MapDraft = {
 	/**  Empty to add a new map; an existing id edits that one. */
@@ -8245,6 +8372,15 @@ export type SeasonLeaderboard = {
 	tiers: LeaderboardTier[],
 };
 
+/**
+ *  A value that must never be logged: a password or a one-time code.
+ *
+ *  Crosses the boundary as a plain string, and that is the only place it is
+ *  visible. `Debug` prints a placeholder, so a command logged with `{:?}`
+ *  anywhere in the runtime cannot leak it.
+ */
+export type Secret = string;
+
 /**  How the organiser wants the bracket seeded. */
 export type SeedOrder =
 /**
@@ -8626,6 +8762,9 @@ export type SettingsState = {
 	cacheInfo?: GameCacheInfo,
 };
 
+/**  One of the things the game needs, in the order the assistant shows them. */
+export type SetupStep = "rosetta" | "wine" | "prefix" | "connectivity" | "game";
+
 /**  How entrants get in. */
 export type SignupMode =
 /**  Anyone signed in may enter. */
@@ -8891,6 +9030,52 @@ export type StageTwoPlan = {
  *  never take the Play button with it.
  */
 export type StatisticsStatus = { type: "idle" } | { type: "loading" } | { type: "loaded" } | { type: "failed"; payload: {
+	reason: string,
+} };
+
+/**  Which kind of Steam Guard code Steam asked for. */
+export type SteamGuardKind =
+/**  A code from the Steam Mobile app's authenticator. */
+{ type: "authenticator" } |
+/**  A code Steam sent by email; `hint` is the masked address Steam names. */
+{ type: "email"; payload: {
+	hint: string,
+} };
+
+/**  Where the Steam sign-in and download currently stands. */
+export type SteamPhase =
+/**  Nothing running: the sign-in form is what the assistant shows. */
+{ type: "idle" } | { type: "signingIn" } |
+/**
+ *  Steam wants a Steam Guard code. `retry` is true when the previous code
+ *  was refused, so the field can say so instead of silently clearing.
+ */
+{ type: "needsCode"; payload: {
+	kind: SteamGuardKind,
+	retry: boolean,
+} } |
+/**  Steam sent a confirmation to the Steam Mobile app and is waiting for it. */
+{ type: "awaitingApproval" } |
+/**  Signed in; the depots are downloading. */
+{ type: "downloading" };
+
+/**
+ *  How far a long step has got.
+ *
+ *  Megabytes rather than bytes because specta refuses 64-bit integers and the
+ *  game is larger than four gigabytes. `permille` is `None` while the size is
+ *  not known yet, which the assistant draws as an indeterminate bar.
+ */
+export type StepProgress = {
+	step: SetupStep | null,
+	permille: number | null,
+	doneMb: number,
+	totalMb: number,
+};
+
+export type StepStatus =
+/**  Not on disk yet. */
+{ type: "missing" } | { type: "running" } | { type: "ready" } | { type: "failed"; payload: {
 	reason: string,
 } };
 

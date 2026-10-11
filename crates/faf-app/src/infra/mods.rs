@@ -886,6 +886,11 @@ fn wine_prefix_root() -> Option<PathBuf> {
     if let Some(path) = std::env::var_os("WINEPREFIX").filter(|value| !value.is_empty()) {
         return Some(PathBuf::from(path));
     }
+    // On a Mac the client's own prefix, which is the one the launcher uses
+    // when nothing else is configured: see `GameConfig::prefix`.
+    if let Some(path) = crate::infra::mac_setup::managed_prefix() {
+        return Some(path);
+    }
     directories::BaseDirs::new().map(|dirs| dirs.home_dir().join(".wine"))
 }
 

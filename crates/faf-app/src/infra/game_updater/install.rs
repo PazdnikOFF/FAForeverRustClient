@@ -88,6 +88,10 @@ fn is_retail_install(dir: &Path) -> bool {
 /// 32-bit game usually sits under the x86 tree).
 fn typical_retail_install_paths() -> Vec<PathBuf> {
     let mut out = Vec::new();
+    // On a Mac, the copy the setup assistant downloaded or adopted.
+    if let Some(dir) = crate::infra::mac_setup::managed_game_dir() {
+        out.push(dir);
+    }
     let program_files_vars = ["ProgramFiles(x86)", "ProgramFiles"];
     let suffixes = [
         r"THQ\Gas Powered Games\Supreme Commander - Forged Alliance",

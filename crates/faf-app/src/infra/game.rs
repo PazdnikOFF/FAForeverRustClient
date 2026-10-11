@@ -62,6 +62,36 @@ pub struct GameConfig {
 }
 
 impl GameConfig {
+    /// The command the game is run through, split into arguments.
+    ///
+    /// The setting when there is one. Otherwise, on a Mac, the Wine the
+    /// client installed itself (`infra::mac_setup`), so a player who never
+    /// opened Settings still gets a working launch. Elsewhere, nothing.
+    fn wrapper(&self) -> Vec<String> {
+        let configured = split_command(&self.launch_wrapper);
+        if !configured.is_empty() {
+            return configured;
+        }
+        crate::infra::mac_setup::managed_wine()
+            .map(|wine| vec![wine.to_string_lossy().into_owned()])
+            .unwrap_or_default()
+    }
+
+    /// The prefix the game runs in: the setting, else the client's own prefix
+    /// when the game runs through the client's own Wine. Empty leaves the
+    /// child's environment alone.
+    fn prefix(&self) -> String {
+        if !self.wine_prefix.is_empty() {
+            return self.wine_prefix.clone();
+        }
+        if !self.launch_wrapper.trim().is_empty() {
+            return String::new();
+        }
+        crate::infra::mac_setup::managed_prefix()
+            .map(|prefix| prefix.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
     pub fn faf() -> Self {
         Self {
             game_path: std::env::var("FAF_GAME_PATH").unwrap_or_default(),
@@ -299,7 +329,7 @@ impl GameProcess {
             .ok_or_else(|| format!("game path has no parent dir: {game_path}"))?;
 
         let config = self.config.lock().unwrap();
-        let wrapper = split_command(&config.launch_wrapper);
+        let wrapper = config.wrapper();
         tracing::info!(
             argument_count = args.len(),
             wrapper = wrapper.first().map(String::as_str).unwrap_or(""),
@@ -326,8 +356,28 @@ impl GameProcess {
         // which `game.prefs` a launched game reads. Passing it to the child
         // rather than asking the user to export it keeps the client and the
         // game looking at one file: `infra::mods` resolves the same setting.
-        if !config.wine_prefix.is_empty() {
-            command.env("WINEPREFIX", &config.wine_prefix);
+        let prefix = config.prefix();
+        if !prefix.is_empty() {
+            command.env("WINEPREFIX", &prefix);
+        }
+        // Wine's own trace output is a firehose nobody reads, and on a Mac it
+        // measurably slows the simulation thread under Rosetta.
+        if !wrapper.is_empty() && std::env::var_os("WINEDEBUG").is_none() {
+            command.env("WINEDEBUG", "-all");
+        }
+        // The client's own Wine is CrossOver's, which can synchronise threads
+        // through Mach semaphores instead of round trips to the wine server.
+        // The game's render and simulation threads hand work to each other
+        // constantly, so that is where the server would cost the most.
+        // `FAF_WINE_MSYNC=0` turns it off for a comparison.
+        let managed = crate::infra::mac_setup::managed_wine().filter(|wine| {
+            wrapper
+                .first()
+                .is_some_and(|program| Path::new(program) == wine)
+        });
+        let msync = std::env::var("FAF_WINE_MSYNC").map_or(true, |value| value != "0");
+        if managed.is_some() {
+            command.env("WINEMSYNC", if msync { "1" } else { "0" });
         }
         let launched = wrapper.first().cloned();
         drop(config);
@@ -353,6 +403,11 @@ impl GameProcess {
         // froze on a blank post-shader-compile screen with zero further disk
         // activity, no crash, no error. `start_kill()` mirrors
         // `ProcessPort::kill`'s own termination call.
+        // The window helper rides along with every game and replay the
+        // client's own Wine runs: see `mac_setup::start_window_helper`.
+        if let Some(wine) = &managed {
+            crate::infra::mac_setup::start_window_helper(wine, &prefix, msync);
+        }
         let game_pid = child.id();
         let running = Running {
             child,
@@ -421,6 +476,12 @@ impl GameProcess {
                     }
                 };
                 if finished {
+                    // The game writes its settings file as it exits, and the
+                    // first time it does is the first chance to give a Mac
+                    // the faster defaults: see `mac_setup::optimize_graphics_once`.
+                    if exited.is_some() {
+                        crate::infra::mac_setup::optimize_graphics_once();
+                    }
                     if let Some(exited) = &exited {
                         exited.notify_waiters();
                     }
@@ -545,7 +606,7 @@ impl ProcessPort for GameProcess {
     }
 
     fn game_argument_path(&self, path: &Path) -> String {
-        let wrapped = !self.config.lock().unwrap().launch_wrapper.trim().is_empty();
+        let wrapped = !self.config.lock().unwrap().wrapper().is_empty();
         game_visible_path(path, wrapped)
     }
 
@@ -942,6 +1003,10 @@ fn default_managed_install_paths() -> DiscoveredInstallPaths {
         std::env::var_os("PROGRAMDATA")
             .or_else(|| std::env::var_os("ALLUSERSPROFILE"))
             .map(|base| PathBuf::from(base).join("FAForever"))
+    } else if cfg!(target_os = "macos") {
+        // Beside Wine, the prefix and the retail game, so everything the Mac
+        // setup made lives in one folder and leaves with it.
+        crate::infra::mac_setup::Layout::resolve().map(|layout| layout.root().join("faforever"))
     } else {
         directories::BaseDirs::new().map(|dirs| dirs.home_dir().join(".faforever"))
     };

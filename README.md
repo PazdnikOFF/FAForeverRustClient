@@ -1,5 +1,17 @@
 # FAForever Client
 
+> **macOS fork.** This is a fork of
+> [FAForeverRustClient/FAForeverRustClient](https://github.com/FAForeverRustClient/FAForeverRustClient)
+> that makes the client a complete, out-of-the-box way to play Forged Alliance
+> Forever on an Apple-silicon Mac. On first launch a setup assistant installs
+> Rosetta 2, Wine (wine-crossover 23.7.1-1), a game prefix with the DirectX
+> runtime, a private Java runtime for FAF's ICE adapter, and Forged Alliance
+> itself from your Steam library (Steam Guard supported), all with progress,
+> into one client-owned folder. Games then start from the lobby through that
+> Wine, borderless full screen, with the cursor kept in the game and Mac
+> graphics defaults applied. See [macOS (Apple silicon)](#macos-apple-silicon)
+> below. Everything else is upstream, unchanged.
+
 A modular FAF (Supreme Commander: Forged Alliance Forever) client in **Rust + Tauri**,
 with a **React** frontend reusing the ForgeMapToolkit design system.
 
@@ -104,6 +116,46 @@ src-tauri/      thin Tauri shell (commands + event forwarding)
 ui/             React frontend (ipc bridge, Zustand store, features)
 docs/           ARCHITECTURE.md (the contract), PROJECT_GUIDE.md (the map),
                 notes/ (dated research, not maintained). See docs/README.md.
+```
+
+## macOS (Apple silicon)
+
+Forged Alliance is a 32-bit Windows game, so on a Mac it runs under Wine and
+Rosetta 2. The client sets all of that up itself: at first launch a setup
+assistant opens and installs, with progress for each part,
+
+- **Rosetta 2**, through macOS's own administrator prompt, when it is missing;
+- **Wine**: wine-crossover 23.7.1-1, the build the official FAF client's macOS
+  scripts were soak-tested on (Game Porting Toolkit and WineHQ 11 are known
+  not to hold a match);
+- **a Wine prefix** with the `d3dx9` and XACT libraries from Microsoft's June 2010
+  DirectX redistributable, unpacked with the system `tar` (no winetricks, no
+  Homebrew);
+- **the online runtime**: a private Temurin 25 JRE, FAF's Java ICE adapter and
+  JavaFX for Apple silicon, so games connect to players on every other client;
+- **the game**, downloaded from Steam with the player's own account (Steam Guard
+  codes and mobile approval included) through SteamRE's DepotDownloader, or
+  adopted from a folder already on the Mac.
+
+Every download is pinned by URL and SHA-256. Everything lives in one folder,
+`~/Library/Application Support/com.FAForever.FAForever-Client/macOS`, which
+Settings, Game can reveal in Finder, rebuild or remove; nothing is installed
+elsewhere. The Steam password is written to the downloader's standard input
+and never stored. After setup the launcher runs the game through that Wine and
+prefix by itself; the Linux-style launch wrapper setting still overrides it.
+
+On the first start the client also gives the game Mac defaults, once: shadows,
+vertical sync, antialiasing and bloom off (the settings that measured
+costliest under Wine on Apple silicon), and a windowed game that
+`fa-window.exe`, a tiny helper built from `natives-src/fa-window` with
+`rustc` alone, turns into a borderless full-screen window. Unlike Direct3D's
+exclusive full screen it is not minimised when another display gets the
+focus, and the helper keeps the cursor inside the game while it is active.
+Wine runs with MSync. Settings, Game can apply the defaults again.
+
+```bash
+pnpm install
+pnpm run tauri build --target aarch64-apple-darwin
 ```
 
 ## Develop

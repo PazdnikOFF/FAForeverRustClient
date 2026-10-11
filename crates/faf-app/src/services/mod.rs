@@ -29,6 +29,7 @@ pub mod guides;
 pub mod launcher;
 pub mod leaderboard;
 pub mod lobby;
+pub mod mac_setup;
 pub mod map_generator;
 pub mod maps;
 pub mod mods;

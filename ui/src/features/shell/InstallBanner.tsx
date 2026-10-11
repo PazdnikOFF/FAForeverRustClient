@@ -17,6 +17,7 @@ import { native } from "../../ipc/native";
 import { Button } from "../../design-system/Button";
 import { Icon } from "../../design-system/Icon";
 import { useAppStore } from "../../store/store";
+import { setupComplete } from "../../store/reducers/macSetup";
 import { t } from "../../i18n";
 import { useTranslation } from "../../i18n/useTranslation";
 
@@ -46,10 +47,46 @@ async function pickInstall() {
   });
 }
 
+const openMacSetup = () =>
+  ipc.send({ kind: "MacSetup", command: { type: "showAssistant" } });
+
 export function InstallBanner() {
   const { t } = useTranslation();
   const install = useAppStore((s) => s.state.install);
+  const macSetup = useAppStore((s) => s.state.macSetup);
   const [dismissed, setDismissed] = useState(false);
+
+  // On a Mac the client installs the game's whole environment itself, and
+  // "locate ForgedAlliance.exe" is the wrong question until it has: the one
+  // thing to offer is the assistant that finishes the job.
+  const macUnfinished = macSetup.supported && macSetup.checked && !setupComplete(macSetup);
+  if (macUnfinished && !dismissed && !macSetup.assistantOpen) {
+    return (
+      <div className="install-banner" role="status">
+        <span className="install-banner-icon" aria-hidden="true">
+          <Icon name="download" size={16} />
+        </span>
+        <div className="install-banner-copy">
+          <strong>{t("shell.install.macTitle")}</strong>
+          <span className="muted">{t("shell.install.macHint")}</span>
+        </div>
+        <div className="install-banner-actions">
+          <Button variant="primary" onClick={() => void openMacSetup()}>
+            {t("shell.install.macOpen")}
+          </Button>
+          <button
+            type="button"
+            className="install-banner-close"
+            aria-label={t("shell.install.dismiss")}
+            title={t("shell.install.dismissTitle")}
+            onClick={() => setDismissed(true)}
+          >
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // `checked` guards the startup window: before the first stat completes we
   // know nothing, and flashing a warning at every launch would train the user
@@ -84,7 +121,9 @@ export function InstallBanner() {
         </strong>
         <span className="muted">
           {pending
-            ? t("shell.install.notDownloadedYetHint")
+            ? macSetup.supported
+              ? t("shell.install.macPendingHint")
+              : t("shell.install.notDownloadedYetHint")
             : replayOnly
               ? t("shell.install.replayOnlyHint")
               : t("shell.install.missingHint")}

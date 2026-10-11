@@ -1,0 +1,320 @@
+/* The Mac setup assistant. A checklist in the manner of a macOS setup
+   assistant: one column, a status glyph per part, progress where something is
+   moving, and the window's actions bottom right with the primary one last. */
+
+.modal-panel.mac-setup-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-width: 560px;
+  padding: 24px 24px 20px;
+}
+
+.mac-setup-head {
+  display: flex;
+  gap: var(--space-3);
+  align-items: flex-start;
+  margin-bottom: var(--space-4);
+}
+
+.mac-setup-icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--color-accent-contrast);
+  background: var(--color-accent);
+  border-radius: var(--radius-lg);
+}
+
+.mac-setup-title {
+  margin: 2px 0 4px;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.mac-setup-subtitle {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.mac-setup-steps {
+  display: flex;
+  flex-direction: column;
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.mac-setup-step {
+  display: flex;
+  gap: var(--space-3);
+  padding: 10px var(--space-3);
+}
+
+.mac-setup-step + .mac-setup-step {
+  border-top: 1px solid var(--color-border);
+}
+
+.mac-setup-step-copy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mac-setup-step-head {
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mac-setup-step-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mac-setup-step-status {
+  flex: none;
+  color: var(--color-subtle);
+  font-size: 12px;
+}
+
+.mac-setup-step-ready .mac-setup-step-status {
+  color: var(--color-ok);
+}
+
+.mac-setup-step-failed .mac-setup-step-status {
+  color: var(--color-error);
+}
+
+.mac-setup-step-detail {
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.mac-setup-step-error {
+  margin: 4px 0 0;
+  color: var(--color-error);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Status glyphs: an empty ring while waiting, a spinning ring while working,
+   a filled check or alert when settled. The icon carries the meaning, so the
+   colour is never the only sign. */
+.mac-setup-glyph {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid var(--color-border-strong);
+  border-radius: 50%;
+}
+
+.mac-setup-glyph-ready {
+  color: var(--color-accent-contrast);
+  background: var(--color-ok);
+  border-color: var(--color-ok);
+}
+
+.mac-setup-glyph-failed {
+  color: var(--color-accent-contrast);
+  background: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.mac-setup-glyph-running {
+  border-color: var(--color-border-strong);
+  border-top-color: var(--color-accent);
+  animation: mac-setup-spin 0.9s linear infinite;
+}
+
+@keyframes mac-setup-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mac-setup-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.mac-setup-bar {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  background: var(--color-border);
+  border-radius: 2px;
+}
+
+.mac-setup-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-accent);
+  border-radius: 2px;
+  transition: width 160ms linear;
+}
+
+/* No total yet: a short segment sweeps across, the way a macOS bar says
+   "working, size unknown". */
+.mac-setup-bar-indeterminate > span {
+  position: absolute;
+  width: 30%;
+  animation: mac-setup-sweep 1.2s ease-in-out infinite;
+}
+
+@keyframes mac-setup-sweep {
+  from {
+    left: -30%;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+.mac-setup-progress-label {
+  color: var(--color-subtle);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mac-setup-glyph-running,
+  .mac-setup-bar-indeterminate > span {
+    animation: none;
+  }
+
+  .mac-setup-bar-indeterminate > span {
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+
+  .mac-setup-bar > span {
+    transition: none;
+  }
+}
+
+:root[data-reduced-motion="true"] .mac-setup-glyph-running,
+:root[data-reduced-motion="true"] .mac-setup-bar-indeterminate > span {
+  animation: none;
+}
+
+.mac-setup-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.mac-setup-source-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.mac-setup-source-intro {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.mac-setup-waiting {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.mac-setup-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+@media (max-width: 520px) {
+  .mac-setup-fields {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mac-setup-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+}
+
+.mac-setup-field > span {
+  color: var(--color-muted);
+}
+
+.mac-setup-note {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0 0 var(--space-3);
+  color: var(--color-subtle);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.mac-setup-source .mac-setup-note {
+  margin: 0;
+}
+
+.mac-setup-source-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.mac-setup-or {
+  margin-right: auto;
+  color: var(--color-subtle);
+  font-size: 12px;
+}
+
+.mac-setup-link {
+  padding: 0;
+  color: var(--color-text);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.mac-setup-footer {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mac-setup-footer-actions {
+  display: flex;
+  gap: var(--space-2);
+}

@@ -30,10 +30,10 @@ use std::sync::{Arc, Mutex, PoisonError};
 use faf_domain::state::{
     AuthCommand, ChangelogCommand, ChatCommand, ClanCommand, ClientUpdateCommand, CoopCommand,
     EventsCommand, GalacticWarCommand, GuidesCommand, LeaderboardCommand, LobbyCommand,
-    MapGeneratorCommand, MapsCommand, ModsCommand, NavCommand, NotificationCommand,
-    PlayerCardCommand, ReplayCommand, ReportingCommand, ReviewsCommand, SessionCommand,
-    SettingsCommand, SocialCommand, StreamsCommand, TourneyCommand, TourneyRead, TrainingCommand,
-    TutorialsCommand, UploadsCommand,
+    MacSetupCommand, MapGeneratorCommand, MapsCommand, ModsCommand, NavCommand,
+    NotificationCommand, PlayerCardCommand, ReplayCommand, ReportingCommand, ReviewsCommand,
+    SessionCommand, SettingsCommand, SocialCommand, StreamsCommand, TourneyCommand, TourneyRead,
+    TrainingCommand, TutorialsCommand, UploadsCommand,
 };
 use faf_domain::AppCommand;
 use tokio::sync::oneshot;
@@ -69,6 +69,12 @@ pub(crate) enum Key {
     Upload,
     /// Checking for, downloading and installing a client update.
     ClientUpdate,
+    /// Installing the Mac components, and resetting the prefix: one at a time,
+    /// since every step writes into the same folder.
+    MacSetup,
+    /// The Steam download and adopting a game folder, which both decide the
+    /// one game folder.
+    MacSetupSteam,
     /// Installing and launching Galactic War share a staging directory.
     GalacticWar,
     /// A GitHub device-flow sign-in: a second one would issue a second code
@@ -196,6 +202,7 @@ pub(crate) fn policy(command: &AppCommand) -> CommandPolicy {
         AppCommand::GalacticWar(command) => galactic_war(command),
         AppCommand::Guides(command) => guides(command),
         AppCommand::ClientUpdate(command) => client_update(command),
+        AppCommand::MacSetup(command) => mac_setup(command),
         AppCommand::Settings(command) => settings(command),
     }
 }
@@ -544,6 +551,26 @@ fn client_update(command: &ClientUpdateCommand) -> CommandPolicy {
         | ClientUpdateCommand::Download
         | ClientUpdateCommand::Install => single_flight(Key::ClientUpdate),
         ClientUpdateCommand::Dismiss => ORDINARY,
+    }
+}
+
+fn mac_setup(command: &MacSetupCommand) -> CommandPolicy {
+    match command {
+        MacSetupCommand::Prepare
+        | MacSetupCommand::ResetPrefix
+        | MacSetupCommand::RemoveEverything => single_flight(Key::MacSetup),
+        MacSetupCommand::SteamDownload { .. } | MacSetupCommand::UseGameFolder { .. } => {
+            single_flight(Key::MacSetupSteam)
+        }
+        // A code and a cancel reach a download that is running, so they must
+        // not wait behind it.
+        MacSetupCommand::SteamCode { .. }
+        | MacSetupCommand::SteamUseCode
+        | MacSetupCommand::CancelSteam => PRIORITY,
+        MacSetupCommand::Probe
+        | MacSetupCommand::OptimizeGraphics
+        | MacSetupCommand::ShowAssistant
+        | MacSetupCommand::HideAssistant => ORDINARY,
     }
 }
 

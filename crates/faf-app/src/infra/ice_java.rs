@@ -68,8 +68,60 @@ fn default_jar_path() -> String {
     let roots = crate::infra::helper_search_roots();
 
     resolve_jar_from_roots(&roots)
+        .or_else(crate::infra::mac_setup::managed_ice_jar)
         .map(|path| path.to_string_lossy().into_owned())
         .unwrap_or_default()
+}
+
+/// The JavaFX modules beside the jar, when there are any.
+///
+/// The adapter's portable `nojfx` jar needs JavaFX on the class path for its
+/// log window, and the Mac setup ships the Apple-silicon modules in a `javafx`
+/// folder next to it. The platform jars carry their own and have no such
+/// folder, so this is empty for them and the launch stays `-jar`.
+fn javafx_modules(jar: &Path) -> Vec<PathBuf> {
+    let Some(dir) = jar.parent().map(|parent| parent.join("javafx")) else {
+        return Vec::new();
+    };
+    let mut modules: Vec<PathBuf> = std::fs::read_dir(dir)
+        .into_iter()
+        .flatten()
+        .filter_map(Result::ok)
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "jar"))
+        .collect();
+    modules.sort();
+    modules
+}
+
+/// The JVM arguments that start the adapter in `jar`.
+fn launch_args(jar: &str) -> Vec<String> {
+    let mut args = Vec::new();
+    // A background helper, not an application: without this macOS gives the
+    // adapter's tray icon a Dock icon and a menu bar of its own.
+    if cfg!(target_os = "macos") {
+        args.push("-Dapple.awt.UIElement=true".to_string());
+    }
+    let modules = javafx_modules(Path::new(jar));
+    if modules.is_empty() {
+        args.extend(["-jar".to_string(), jar.to_string()]);
+    } else {
+        let separator = if cfg!(windows) { ";" } else { ":" };
+        let class_path = std::iter::once(jar.to_string())
+            .chain(
+                modules
+                    .iter()
+                    .map(|path| path.to_string_lossy().into_owned()),
+            )
+            .collect::<Vec<_>>()
+            .join(separator);
+        args.extend([
+            "-cp".to_string(),
+            class_path,
+            "com.faforever.iceadapter.IceAdapter".to_string(),
+        ]);
+    }
+    args
 }
 
 fn resolve_jar_from_roots(roots: &[PathBuf]) -> Option<PathBuf> {
@@ -164,9 +216,21 @@ impl JavaAdapter {
         rpc_port: u16,
         gpg_port: u16,
     ) -> Result<(JsonRpcClient, mpsc::Receiver<RpcNotification>), String> {
-        let mut args: Vec<String> = vec![
-            "-jar".into(),
-            self.config.jar_path.clone(),
+        // Resolved again when the configured paths are missing: on a Mac the
+        // runtime and the jar are installed by the setup assistant, which may
+        // well finish after this adapter was constructed at startup.
+        let java_path = if Path::new(&self.config.java_path).is_file() {
+            self.config.java_path.clone()
+        } else {
+            super::java_runtime::preferred_java_path()
+        };
+        let jar_path = if Path::new(&self.config.jar_path).is_file() {
+            self.config.jar_path.clone()
+        } else {
+            default_jar_path()
+        };
+        let mut args: Vec<String> = launch_args(&jar_path);
+        args.extend([
             "--id".into(),
             params.player_id.to_string(),
             "--login".into(),
@@ -177,7 +241,7 @@ impl JavaAdapter {
             rpc_port.to_string(),
             "--gpgnet-port".into(),
             gpg_port.to_string(),
-        ];
+        ]);
         if ice.force_relay {
             args.push("--force-relay".into());
         }
@@ -199,12 +263,12 @@ impl JavaAdapter {
         // out of an ordinary log; when a join fails they are the only thing
         // that says why, and `FAF_LOG=faf_app=trace` turns them on. The Python
         // client logs the same stream at its own lowest level.
-        let mut command = Command::new(&self.config.java_path);
+        let mut command = Command::new(&java_path);
         command
             .args(&args)
             .env("LOG_DIR", &self.config.log_dir)
             .current_dir(
-                Path::new(&self.config.jar_path)
+                Path::new(&jar_path)
                     .parent()
                     .unwrap_or_else(|| Path::new(".")),
             )

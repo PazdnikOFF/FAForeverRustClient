@@ -160,8 +160,11 @@ pub fn run_helper_if_asked(arguments: &[String]) -> Option<i32> {
 
 /// What the helper's exit code says. Only [`Exit::GameEnded`] ever showed a
 /// status; the rest are the reasons it could not.
+// Every reason but `Unsupported` is only reached by the Steamworks helper,
+// which is not built where Valve's library is not shipped: macOS among them.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
+#[cfg_attr(not(any(windows, target_os = "linux")), allow(dead_code))]
 enum Exit {
     GameEnded = 0,
     Usage = 2,

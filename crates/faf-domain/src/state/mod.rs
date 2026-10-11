@@ -17,6 +17,7 @@ pub mod guides;
 pub mod install;
 pub mod leaderboard;
 pub mod lobby;
+pub mod mac_setup;
 pub mod map_generator;
 pub mod maps;
 pub mod mods;
@@ -87,6 +88,10 @@ pub use lobby::{
     HostGameConfig, JoinState, LobbyCommand, LobbyEvent, LobbyState, LobbyStatus, MatchmakerQueue,
     MatchmakingState, PartyMember, PartyState, PlayMode, PlayerVeto, PreparationPhase, RatingRange,
     GLOBAL_LEADERBOARD, GO_ADAPTER_TITLE_TAG,
+};
+pub use mac_setup::{
+    MacSetupCommand, MacSetupEvent, MacSetupProbe, MacSetupState, Secret, SetupStep,
+    SteamGuardKind, SteamPhase, StepProgress, StepStatus,
 };
 pub use map_generator::{
     is_valid_preset_name, preset_file_name, DecodedMapName, DecodedStyle, GenerationType,
@@ -246,6 +251,7 @@ pub struct AppState {
     pub galactic_war: GalacticWarState,
     pub guides: GuidesState,
     pub client_update: ClientUpdateState,
+    pub mac_setup: MacSetupState,
     pub settings: SettingsState,
     pub changelog: ChangelogState,
 }

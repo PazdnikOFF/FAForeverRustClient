@@ -14,6 +14,7 @@ import { reduceGalacticWar } from "./reducers/galacticWar";
 import { reduceGuides } from "./reducers/guides";
 import { reduceLeaderboard } from "./reducers/leaderboard";
 import { reduceLobby } from "./reducers/lobby";
+import { reduceMacSetup } from "./reducers/macSetup";
 import { reduceMapGenerator } from "./reducers/mapGenerator";
 import { reduceMaps } from "./reducers/maps";
 import { reduceMods } from "./reducers/mods";
@@ -52,6 +53,8 @@ export function applyEvent(state: AppState, event: AppEvent): AppState {
       return { ...state, coop: reduceCoop(state.coop, event.event) };
     case "Events":
       return { ...state, events: reduceEvents(state.events, event.event) };
+    case "MacSetup":
+      return { ...state, macSetup: reduceMacSetup(state.macSetup, event.event) };
     case "Install":
       return { ...state, install: reduceInstall(state.install, event.event) };
     case "Social":

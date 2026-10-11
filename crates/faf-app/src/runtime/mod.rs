@@ -555,6 +555,10 @@ impl AppLoop {
         // reaches a client nobody has restarted since Friday.
         services::client_update::spawn(ctx.clone(), self.sink.clone());
 
+        // And a Mac that cannot run the game yet should start getting ready
+        // the moment the client opens, not when somebody presses Play.
+        services::mac_setup::spawn(ctx.clone(), self.sink.clone());
+
         // And how big the state has grown, written to the log now and then:
         // see `census`.
         census::spawn(self.sink.clone());
@@ -867,6 +871,7 @@ async fn dispatch(cmd: AppCommand, ctx: &ServiceCtx, sink: &EventSink) {
         AppCommand::Uploads(c) => services::uploads::handle(c, ctx, sink).await,
         AppCommand::GalacticWar(c) => services::galactic_war::handle(c, ctx, sink).await,
         AppCommand::ClientUpdate(c) => services::client_update::handle(c, ctx, sink).await,
+        AppCommand::MacSetup(c) => services::mac_setup::handle(c, ctx, sink).await,
         AppCommand::Social(c) => services::social::handle(c, ctx, sink).await,
         AppCommand::Streams(c) => services::streams::handle(c, ctx, sink).await,
         AppCommand::Settings(c) => services::settings::handle(c, ctx, sink).await,

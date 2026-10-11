@@ -14,6 +14,7 @@ import { LoginView } from "./features/auth/LoginView";
 import { AppShell } from "./features/shell/AppShell";
 import { CommandErrorBanner } from "./features/shell/CommandErrorBanner";
 import { ExitGuard } from "./features/shell/ExitGuard";
+import { MacSetupAssistant } from "./features/mac-setup/MacSetupAssistant";
 import { StartupView } from "./features/shell/StartupView";
 import {
   clearLegacyBrowsingPreferences,
@@ -222,6 +223,9 @@ export function App() {
   return (
     <>
       {content}
+      {/* Over the login screen as well as the shell: a Mac starts getting the
+          game ready the moment the client opens, signed in or not. */}
+      <MacSetupAssistant />
       <ExitGuard />
       {commandError && (
         <CommandErrorBanner message={commandError} onDismiss={() => setCommandError(null)} />

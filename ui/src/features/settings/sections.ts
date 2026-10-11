@@ -29,6 +29,7 @@ import { DiscordSettingsSection } from "./DiscordSettingsSection";
 import { FoldersSettingsSection } from "./FoldersSettingsSection";
 import { GameCacheSettingsSection } from "./GameCacheSettingsSection";
 import { GameSettingsSection } from "./GameSettingsSection";
+import { MacSetupSettingsSection } from "./MacSetupSettingsSection";
 import { GeneralSettingsSection } from "./GeneralSettingsSection";
 import { NotificationsSettingsSection } from "./NotificationsSettingsSection";
 import { PathsSettingsSection } from "./PathsSettingsSection";
@@ -99,7 +100,7 @@ export const SECTIONS: Record<SectionKey, SectionDef> = {
     description: "settings.page.game.description",
     keywords: "settings.section.game.keywords",
     icon: "play",
-    panels: [GameSettingsSection],
+    panels: [MacSetupSettingsSection, GameSettingsSection],
   },
   paths: {
     title: "settings.page.paths.title",

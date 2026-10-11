@@ -1,0 +1,18 @@
+{
+  "bundle": {
+    "category": "StrategyGame",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns"
+    ],
+    "resources": {
+      "../natives/java-ice-adapter/faf-ice-adapter.jar": null,
+      "../natives/fa-window.exe": "natives/fa-window.exe"
+    },
+    "macOS": {
+      "minimumSystemVersion": "13.0"
+    }
+  }
+}
