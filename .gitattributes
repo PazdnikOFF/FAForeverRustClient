@@ -18,3 +18,6 @@
 
 # Valve's Steamworks libraries: byte-for-byte as the SDK ships them.
 vendor/steamworks/*/* binary
+# The fork keeps its own README; an upstream change to it never overrides it on
+# merge. Needs `git config merge.ours.driver true` once per clone.
+README.md merge=ours

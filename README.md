@@ -1,215 +1,124 @@
-# FAForever Client
+# FAF for Mac (unofficial)
 
-> **macOS fork.** This is a fork of
-> [FAForeverRustClient/FAForeverRustClient](https://github.com/FAForeverRustClient/FAForeverRustClient)
-> that makes the client a complete, out-of-the-box way to play Forged Alliance
-> Forever on an Apple-silicon Mac. On first launch a setup assistant installs
-> Rosetta 2, Wine (wine-crossover 23.7.1-1), a game prefix with the DirectX
-> runtime, a private Java runtime for FAF's ICE adapter, and Forged Alliance
-> itself from your Steam library (Steam Guard supported), all with progress,
-> into one client-owned folder. Games then start from the lobby through that
-> Wine, with the cursor kept in the game and Mac graphics defaults applied. See [macOS (Apple silicon)](#macos-apple-silicon)
-> below. Everything else is upstream, unchanged.
->
-> This fork is unofficial and not supported by the upstream maintainers. It
-> releases only the macOS build, under its own identifier
-> (`com.pazdnikoff.faforever-mac`) and its own version line (`2026.10.x`), so it
-> never installs over or looks like a newer official client. On Windows or
-> Linux, use the [official releases](https://github.com/FAForeverRustClient/FAForeverRustClient/releases).
+Play [Forged Alliance Forever](https://www.faforever.com/) on an Apple-silicon Mac.
 
-A modular FAF (Supreme Commander: Forged Alliance Forever) client in **Rust + Tauri**,
-with a **React** frontend reusing the ForgeMapToolkit design system.
+This is an **unofficial** fork of the
+[FAForever Rust client](https://github.com/FAForeverRustClient/FAForeverRustClient)
+that adds macOS support: on first launch it installs everything Forged Alliance
+needs to run under Wine, then starts games from the lobby like the client does
+on Windows.
 
-Architecture is the contract: see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-One source of truth in Rust, a fully state-driven UI, no per-tab logic.
+> **Not supported by the FAForever or FAForeverRustClient teams.** They have not
+> reviewed, tested or endorsed this build. Report problems
+> [here](https://github.com/PazdnikOFF/FAForeverRustClient/issues), not upstream.
+> On Windows or Linux, use the
+> [official client](https://github.com/FAForeverRustClient/FAForeverRustClient/releases)
+> instead: this fork publishes only the macOS build.
 
-## Status
+## Requirements
 
-The unidirectional state loop is wired end-to-end and proven:
+- A Mac with Apple silicon (M1 or later). Intel Macs are not supported.
+- macOS 13 Ventura or later.
+- Forged Alliance in your Steam library, or an existing copy of the game folder.
+- A FAF account.
+- Several gigabytes of free disk space for Wine, the game and the runtime.
 
-```
-UI dispatch ─▶ Tauri command ─▶ service ─▶ event ─▶ reduce(AppState) ─▶ emit ─▶ store ─▶ UI
-```
+## Install
 
-The vertical slices that established the loop, each still the reference for its pattern:
+1. Download `FAForever.Client_<version>_aarch64.dmg` from
+   [Releases](https://github.com/PazdnikOFF/FAForeverRustClient/releases).
+2. Open it and drag **FAForever Client** to **Applications**.
+3. Open the app. The build is not notarized by Apple, so macOS blocks it the
+   first time. Open **System Settings → Privacy & Security**, scroll down and
+   click **Open Anyway** next to the message about FAForever Client.
 
-- **session**: connection-status handshake.
-- **auth**: login/logout via the **Port pattern** (`AuthPort`). Real provider `OAuthAuth`
-  (FAF Ory Hydra, Authorization Code + PKCE); `FakeAuth` for tests/offline. State-driven
-  login ↔ app routing. The login screen can remember the session using an OS-keyring
-  refresh token and restore it silently on the next launch.
-- **nav**: multi-tab shell; the active tab lives in `AppState` so the backend can drive
-  navigation too.
-- **settings**: persisted preferences (first: UI `theme`), loaded from disk on startup
-  and saved on change via `SettingsPort` → `FileSettings`. The theme is type-safe across
-  the boundary (a `Theme` enum) and applied as `<html data-theme>`. Four themes ship:
-  `forgeDark` (default), `forgeLight`, `javaClient`, `pythonClient`: each a token set in
-  `tokens.css`, so adding a theme touches no component.
-- **lobby**: a live open-games list driven by a **streaming port** (`LobbyPort::connect`
-  → snapshot stream → `GamesUpdated` events), with explicit `connect`/`disconnect`.
-  Real provider `LobbyClient` (FAF lobby WebSocket protocol) is used for normal account
-  sessions; `FakeLobby` remains available for offline mode. The connection flow is
-  `GET user.faforever.com/lobby/access` → verified `wss://…/?verify=…` URL →
-  `ask_session` → `auth` (token + `faf-uid` fingerprint) → `game_info`. The OAuth access
-  token reaches the lobby via an in-memory `TokenStore`, never through `AppState`.
+   Only do this for a file downloaded from the Releases page above. GitHub shows
+   each file's SHA-256 next to it, and you can compare it with
+   `shasum -a 256 <file>`.
 
-Everything since is the same shape, one slice plus service plus port each. 28 slices and 14
-tabs today; `ls ui/src/features` and `crates/faf-domain/src/state/mod.rs` are the current
-answer, and `docs/PROJECT_GUIDE.md` maps them:
+## First launch
 
-- **play**: custom game browser and hosting, matchmaker with party and map pool vetoes,
-  co-op, and Galactic War (a separate application this client only installs and starts).
-- **chat**: IRC over a binary WebSocket, with reconnect after a suspend.
-- **vault**: maps, mods, replays (vault, local and live spectate), uploads, and the Neroxis
-  map generator.
-- **community**: tournaments against FAF's own `faf-tournaments` service, leaderboards and
-  player cards, clan management, moderation reports and reviews.
-- **content**: a training hub over a community catalogue kept in a Git repository, an events
-  calendar built the same way, and FAForever/fa's patch notes read in the client.
-- **client**: settings with configurable game paths, notifications, diagnostics, and client
-  self-update from GitHub releases.
-- **six languages** (`en`, `de`, `fr`, `ru`, `es`, `pl`): a missing translation falls back to
-  English, and a missing key is a compile error. See `ui/src/i18n/`.
+A setup assistant opens and installs, with progress for each step:
 
-**CI** (`.github/workflows/ci.yml`) runs tests, clippy, frontend linting,
-typecheck, build, a bindings-drift check (fails if `ui/src/ipc/bindings.ts` is
-stale), and a tokens-only guardrail (fails if any component CSS hardcodes a
-hex color instead of a token).
+- **Rosetta 2**, through macOS's own administrator prompt, if it is missing.
+- **Wine** (wine-crossover 23.7.1-1, the build FAF's own macOS scripts were
+  tested on).
+- **A Wine prefix** with the DirectX 9 and XACT libraries from Microsoft's June
+  2010 DirectX redistributable.
+- **The online runtime**: a private Java runtime, FAF's ICE adapter and JavaFX,
+  so you can play with people on every other client.
+- **The game**, downloaded from Steam with your own account (Steam Guard codes
+  and mobile approval work), or taken from a folder already on the Mac.
 
-Env toggles for local dev:
-- `FAF_FAKE_AUTH=1`: skip the browser login (offline fake auth)
-- `FAF_FAKE_LOBBY=1` / `FAF_FAKE_CHAT=1`: keep either live service local while testing
-- `FAF_FAKE_ROLES=TOURNAMENT_DIRECTOR`: comma-separated permission roles for the session,
-  so role-gated UI can be built and screenshotted without holding the role. It reveals
-  controls and authorises nothing: FAF still refuses every privileged call from an account
-  that lacks the role. Nothing gates on it today; the tournament service answers who the
-  caller is per event instead.
-- `TOURNEY_API_BASE=…`: point the tournament tab at a different faf-tournaments
-  deployment, such as a local `node server.js`. Defaults to the live service.
-- `FAF_REAL_LOBBY=1` / `FAF_REAL_CHAT=1`: legacy flags retained for existing launch scripts;
-  live services are now the default for a real account session
-- `FAF_ICE_ADAPTER_KIND`: overrides the Settings choice: `java` selects the
-  production `faf-ice-adapter` (the default); `go` selects the experimental
-  bundled `faf-pioneer` backend.
-- `FAF_UID_PATH`: optional path override for the `faf-uid` executable. `pnpm run tauri …`
-  prepares the official helper in `natives/` automatically (<https://github.com/FAForever/uid/releases>);
-  `FAF_UID_VERSION` can select a different release.
-- `FAF_ICE_ADAPTER_JAR`: override the checksum-verified Java ICE adapter bundled by `pnpm tauri`
-- `FAF_JAVA_PATH`: override the Java 21+ executable. The client otherwise checks a bundled runtime, the official FAF Client installation, `JAVA_HOME`, then `PATH`.
-- `FAF_ICE_ADAPTER_VERSION` and `FAF_ICE_ADAPTER_SHA256`: override the pinned official adapter release together
-- `FAF_ICE_ADAPTER_PATH`: optional path override for the bundled `faf-pioneer`
-- `FAF_GAME_PATH`: path to `ForgedAlliance.exe` (its folder must hold `init_<mod>.lua`)
-- `FAF_CLIENT_VERSION`: client version reported to the lobby (defaults to the crate version)
-- `FAF_LOG`: optional `tracing` filter for client diagnostics (for example
-  `faf_app=debug,faforever_rust_client_lib=info,warn`); the default records client info and all warnings
-- `FAF_USER_API_BASE` / `FAF_API_BASE` / `FAF_HYDRA_BASE` / `FAF_LOBBY_URL`: endpoint overrides (e.g. staging)
+Every download is pinned to a fixed URL and SHA-256 checksum. Your Steam password
+is passed straight to the downloader (SteamRE's DepotDownloader) and is never
+saved. If you would rather not enter it, point the assistant at a game folder
+you already have.
 
-Packaged and development builds write daily `faforever-client.*.log` files to
-the operating system's application log directory. At most seven files are
-retained. Debug builds also mirror the structured log to the terminal; access
-tokens, raw adapter output, local paths and network candidates are intentionally
-excluded from these records.
-
-## Layout
+Everything is installed into one folder:
 
 ```
-crates/
-  faf-domain/   pure state + events + commands + reducer (no IO, no async)
-  faf-app/      runtime loop, services, ports, infra
-  faf-ipc/      generates ui/src/ipc/bindings.ts from the Rust types
-src-tauri/      thin Tauri shell (commands + event forwarding)
-ui/             React frontend (ipc bridge, Zustand store, features)
-docs/           ARCHITECTURE.md (the contract), PROJECT_GUIDE.md (the map),
-                notes/ (dated research, not maintained). See docs/README.md.
+~/Library/Application Support/com.FAForever.FAForever-Client/macOS
 ```
 
-## macOS (Apple silicon)
+**Settings → Game & launch → Forged Alliance on This Mac** can show it in
+Finder, rebuild the game environment or remove everything.
 
-Forged Alliance is a 32-bit Windows game, so on a Mac it runs under Wine and
-Rosetta 2. The client sets all of that up itself: at first launch a setup
-assistant opens and installs, with progress for each part,
+On the first start the client also applies Mac-friendly game settings once:
+shadows, vertical sync, antialiasing and bloom off, the costliest options under
+Wine. A small helper brings the game window to the front when a match starts and
+keeps the cursor inside it, so the screen edge scrolls the map. **Optimize
+Graphics for Mac** in the same settings panel applies these defaults again.
 
-- **Rosetta 2**, through macOS's own administrator prompt, when it is missing;
-- **Wine**: wine-crossover 23.7.1-1, the build the official FAF client's macOS
-  scripts were soak-tested on (Game Porting Toolkit and WineHQ 11 are known
-  not to hold a match);
-- **a Wine prefix** with the `d3dx9` and XACT libraries from Microsoft's June 2010
-  DirectX redistributable, unpacked with the system `tar` (no winetricks, no
-  Homebrew);
-- **the online runtime**: a private Temurin 25 JRE, FAF's Java ICE adapter and
-  JavaFX for Apple silicon, so games connect to players on every other client;
-- **the game**, downloaded from Steam with the player's own account (Steam Guard
-  codes and mobile approval included) through SteamRE's DepotDownloader, or
-  adopted from a folder already on the Mac.
+## Updates
 
-Every download is pinned by URL and SHA-256. Everything lives in one folder,
-`~/Library/Application Support/com.FAForever.FAForever-Client/macOS`, which
-Settings, Game can reveal in Finder, rebuild or remove; nothing is installed
-elsewhere. The Steam password is written to the downloader's standard input
-and never stored. After setup the launcher runs the game through that Wine and
-prefix by itself; the Linux-style launch wrapper setting still overrides it.
+The client checks this fork's releases for updates. Releases are currently
+published as pre-releases, so turn on **Settings → Updates → Include
+pre-releases** to be offered them.
 
-On the first start the client also gives the game Mac defaults, once: shadows,
-vertical sync, antialiasing and bloom off, the settings that measured
-costliest under Wine on Apple silicon. `fa-window.exe`, a tiny helper built
-from `natives-src/fa-window` with `rustc` alone, runs beside the game: it
-brings the game's window forward when it starts (macOS no longer lets a
-background application take the focus) and keeps the cursor inside the game
-while it is active, so the screen edge scrolls the map instead of leading to
-another display. Wine runs with MSync. Settings, Game can apply the defaults again.
+**Upgrading from 0.8.1:** that build used the official client's app identifier
+and does not see newer fork releases. Install the new version from Releases,
+then delete the old app. Wine, the game and your FAF settings are kept.
+
+## Uninstall
+
+1. In the client, **Settings → Game & launch → Remove Everything…** deletes
+   Wine, the prefix, the runtime and the game it installed. Or delete the
+   folder above by hand.
+2. Delete **FAForever Client** from **Applications**.
+3. Optionally delete `~/Library/Application Support/com.FAForever.FAForever-Client`
+   for the client's settings, cache and logs.
+
+## What this fork changes
+
+- The macOS setup assistant and game launch through Wine (`crates/faf-app/src/infra/mac_setup`).
+- `fa-window.exe` (`natives-src/fa-window`), which hands the focus to the game
+  and keeps the cursor in it.
+- Its own app identifier (`com.pazdnikoff.faforever-mac`) and version line
+  (`2026.10.x`), so it never installs over the official client.
+- Updates come from this repository, and only the macOS build is released.
+- CI builds and tests on macOS.
+
+Everything else follows upstream and is merged from it regularly.
+
+## Build from source
+
+You need Rust (stable), Node 20+ and pnpm (`corepack enable pnpm`).
 
 ```bash
 pnpm install
-pnpm run tauri build --target aarch64-apple-darwin
+pnpm run tauri dev                                   # run in development
+pnpm run tauri build --target aarch64-apple-darwin   # build the .app and .dmg
+cargo test                                           # Rust tests
+pnpm test                                            # frontend tests
 ```
 
-## Develop
+Architecture, conventions and the development environment variables are
+described upstream: see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md),
+[`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md) and the
+[upstream README](https://github.com/FAForeverRustClient/FAForeverRustClient#readme).
 
-Prerequisites: Rust (stable), Node 20+, pnpm (via `corepack enable pnpm`), and the
-Tauri prerequisites for your OS (on Windows: WebView2, already present on Win 10/11).
-Dependency installation with npm or Yarn is intentionally rejected; use the pnpm
-version pinned by `package.json`.
+## License
 
-```bash
-pnpm install                # frontend deps
-pnpm run bindings           # regenerate ui/src/ipc/bindings.ts from Rust
-pnpm run tauri dev          # run the app (Vite + Tauri)
-```
-
-The Tauri command prepares the platform-specific helpers in the ignored `natives/`
-directory, each pinned to a version and checked against a SHA-256 digest before it
-is used: `faf-uid` for the anti-smurf fingerprint and `faf-pioneer`, FAF's Go ICE
-adapter. Neither is committed.
-
-- `FAF_SKIP_UID_DOWNLOAD=1` / `FAF_SKIP_PIONEER_DOWNLOAD=1` skip a download for an
-  offline or test run.
-- `FAF_UID_PATH` / `FAF_ICE_ADAPTER_PATH` point at a locally managed binary instead.
-- Both are skipped automatically when `FAF_FAKE_AUTH` is set without
-  `FAF_REAL_LOBBY`, since neither is reachable in that mode anyway.
-
-Other commands:
-
-```bash
-cargo test                  # run Rust tests (reducer + loop)
-pnpm run lint               # ESLint, including React Hooks rules
-pnpm run typecheck          # tsc over the frontend
-pnpm test                   # run frontend tests
-pnpm run build              # build the frontend to ui/dist
-```
-
-## Conventions
-
-When you add anything, follow [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §8:
-
-- New state → a **slice** + reducer + tests in `faf-domain/state/`.
-- New capability → a **command + event(s)** + a **service** in `faf-app/services/`.
-- New external system → a **`Port` trait** + an **`infra` impl** + a mock.
-- New screen → a **`features/<tab>/`** folder; container selects + dispatches, view uses primitives.
-- After changing cross-boundary types, run `pnpm run bindings`.
-
-Never: mutate state outside a reducer; do IO outside `infra`; put logic in a component;
-hand-write a cross-boundary type.
-
-CI also enforces a few repository rules that no linter catches, including a ban on
-em dashes across the whole tree. They are listed with the commands that reproduce
-them in [`docs/PROJECT_GUIDE.md`](docs/PROJECT_GUIDE.md#8-repository-guardrails).
+MIT, as upstream. See [LICENSE](LICENSE) and
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
