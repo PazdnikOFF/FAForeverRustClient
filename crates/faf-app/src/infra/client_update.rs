@@ -55,13 +55,16 @@ pub const ASSET_SUFFIXES: [&str; 2] = [".dmg", ".app.tar.gz"];
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub const ASSET_SUFFIXES: [&str; 3] = [".AppImage", ".deb", ".rpm"];
 
-/// The default source of releases: this client's own repository.
+/// The default source of releases: the macOS fork's own repository.
+///
+/// Not upstream's: the fork keeps its own identifier and version line, and
+/// upstream publishes no macOS build, so its releases are never this client's.
 ///
 /// It has to be the repository's real name, not a readable version of it. This
 /// was `FAForeverRustClient/FAForever-Rust-Client`, which GitHub answers with a
 /// 404, so every update check failed and no client would ever have been offered
 /// a release however well one was published.
-const DEFAULT_REPO: &str = "FAForeverRustClient/FAForeverRustClient";
+const DEFAULT_REPO: &str = "PazdnikOFF/FAForeverRustClient";
 
 /// GitHub rejects unidentified API clients, so this is required, not polite.
 /// Thirty releases of GitHub JSON, with room to spare. The API's own page of

@@ -237,7 +237,9 @@ pub(crate) fn free_ports(count: usize) -> Option<Vec<u16>> {
 /// On-disk identity. One definition, because these were duplicated across six
 /// files and the product had already been renamed out from under them: the
 /// bundle is `FAForever Client` / `com.faforever.rustclient` while every path
-/// still said `forgeclient`/`forge-client`.
+/// still said `forgeclient`/`forge-client`. The macOS fork's bundle identifier
+/// is `com.pazdnikoff.faforever-mac`; these on-disk names stay upstream's so a
+/// fork install keeps its Wine prefix and settings.
 pub(crate) const APP_QUALIFIER: &str = "com";
 pub(crate) const APP_ORGANIZATION: &str = "FAForever";
 pub(crate) const APP_NAME: &str = "FAForever Client";

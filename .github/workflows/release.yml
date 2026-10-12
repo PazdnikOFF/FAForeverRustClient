@@ -84,6 +84,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # This fork publishes the macOS build and nothing else. Windows and
+        # Linux players use upstream's own releases; a rebuild of them here
+        # would only be the official client from a third party.
+        #
         # macOS is Apple silicon only. The game runs there under Wine, and the
         # client installs Wine, the prefix, the Java runtime with the ICE
         # adapter, and the game itself at first launch (`infra::mac_setup`),
@@ -92,26 +96,12 @@ jobs:
         include:
           - platform: 'macos-latest'
             args: '--target aarch64-apple-darwin'
-          - platform: 'ubuntu-22.04'
-            args: ''
-          - platform: 'windows-latest'
-            args: ''
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v7
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install Linux build dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          # See the same step in ci.yml: a third-party apt source with a stale
-          # index must not be able to fail a release. The install below stays
-          # strict, so a package that really did not arrive still stops this.
-          sudo grep -rlE 'dl[.]google[.]com|packages[.]microsoft[.]com' /etc/apt/sources.list.d 2>/dev/null | xargs -r sudo rm -f
-          sudo apt-get update || true
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       # No version here: package.json's `packageManager` field is the single
       # source, and passing both makes the action refuse to guess.
@@ -152,8 +142,11 @@ jobs:
           # leading `v` and nothing else: a tag shaped any other way is invisible
           # to the client's own update check.
           tagName: v__VERSION__
-          releaseName: 'FAForever Client v__VERSION__'
-          releaseBody: 'Download the installer for your platform from the assets below.'
+          releaseName: 'FAF for Mac v__VERSION__ (unofficial)'
+          releaseBody: |
+            Unofficial macOS (Apple silicon) build of the FAForever Rust client, from this fork.
+            It is not made, tested or supported by the FAForeverRustClient maintainers; report problems here, not upstream.
+            Windows and Linux players: use the official client from https://github.com/FAForeverRustClient/FAForeverRustClient/releases.
           releaseDraft: false
           prerelease: ${{ inputs.prerelease }}
           args: ${{ matrix.args }}

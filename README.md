@@ -10,6 +10,12 @@
 > into one client-owned folder. Games then start from the lobby through that
 > Wine, with the cursor kept in the game and Mac graphics defaults applied. See [macOS (Apple silicon)](#macos-apple-silicon)
 > below. Everything else is upstream, unchanged.
+>
+> This fork is unofficial and not supported by the upstream maintainers. It
+> releases only the macOS build, under its own identifier
+> (`com.pazdnikoff.faforever-mac`) and its own version line (`2026.10.x`), so it
+> never installs over or looks like a newer official client. On Windows or
+> Linux, use the [official releases](https://github.com/FAForeverRustClient/FAForeverRustClient/releases).
 
 A modular FAF (Supreme Commander: Forged Alliance Forever) client in **Rust + Tauri**,
 with a **React** frontend reusing the ForgeMapToolkit design system.

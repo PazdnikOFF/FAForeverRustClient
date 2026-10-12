@@ -233,8 +233,9 @@ mod tests {
     fn package_identifier_is_stable_and_release_ready() {
         assert_eq!(
             tauri_config()["identifier"],
-            "com.faforever.rustclient",
-            "changing the installed application identity requires an explicit migration"
+            "com.pazdnikoff.faforever-mac",
+            "the macOS fork must not install over the official client \
+             (`com.faforever.rustclient`), and changing it again needs a migration"
         );
     }
 
